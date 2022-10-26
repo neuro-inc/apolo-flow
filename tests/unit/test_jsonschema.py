@@ -60,6 +60,10 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     for fname in chain(toplevel.glob("**/*.yml"), toplevel.glob("**/*.yaml")):
         if ".github" in fname.parts:
             continue
+        if ".venv" in fname.parts:
+            continue
+        if "venv" in fname.parts:
+            continue
         if fname.name.startswith("."):
             continue
         if "bad" in fname.stem.split("-"):
