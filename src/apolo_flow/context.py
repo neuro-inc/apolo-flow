@@ -1342,7 +1342,7 @@ async def apply_mixins(
 
 
 async def setup_mixins(
-    raw_mixins: Optional[Mapping[str, _MixinApplyTarget]]
+    raw_mixins: Optional[Mapping[str, _MixinApplyTarget]],
 ) -> Mapping[str, _MixinApplyTarget]:
     if raw_mixins is None:
         return {}
