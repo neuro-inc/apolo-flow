@@ -239,7 +239,7 @@ _SELF = TypeVar("_SELF", bound=RetryConfig)
 
 
 def retry(
-    func: Callable[Concatenate[_SELF, _P], Awaitable[_R]]
+    func: Callable[Concatenate[_SELF, _P], Awaitable[_R]],
 ) -> Callable[Concatenate[_SELF, _P], Coroutine[Any, Any, _R]]:
     async def inner(self: _SELF, *args: _P.args, **kwargs: _P.kwargs) -> _R:
         for retry in retries(
