@@ -867,7 +867,7 @@ def make_list_comp(args: Tuple[Item, Token, Token, Token, Item]) -> ListCompMake
 
 
 def make_list_comp_with_if(
-    args: Tuple[Item, Token, Token, Token, Item, Token, Item]
+    args: Tuple[Item, Token, Token, Token, Item, Token, Item],
 ) -> ListCompMaker:
     item_expr, _, name, _, base_iter, _, if_expr = args
     return ListCompMaker(
@@ -899,7 +899,7 @@ class DictMaker(Item):
 
 
 def make_dict(
-    args: Union[Tuple[Item, Item, List[Tuple[Item, Item]]], Tuple[Item, Item]]
+    args: Union[Tuple[Item, Item, List[Tuple[Item, Item]]], Tuple[Item, Item]],
 ) -> DictMaker:
     lst = [(args[0], args[1])]
     if len(args) > 2:
