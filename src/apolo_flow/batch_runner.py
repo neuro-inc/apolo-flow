@@ -849,7 +849,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
                     prefix = task.yaml_id[:-1]
                     graph = graphs[prefix]
                     deps = graph[task.yaml_id]
-                    if not deps or all(dep in handled for dep in deps):
+                    if not deps or all(dep in handled for dep in deps):  # type: ignore[comparison-overlap]  # noqa
                         if (
                             prefix in tasks
                             and tasks[prefix].status != TaskStatus.SUCCEEDED

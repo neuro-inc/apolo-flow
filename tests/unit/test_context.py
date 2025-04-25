@@ -642,7 +642,7 @@ async def test_batch_action_default(batch_config_loader: ConfigLoader) -> None:
 
 
 def _make_ast_call(
-    args: Mapping[str, Union[bool, int, float, str]]
+    args: Mapping[str, Union[bool, int, float, str]],
 ) -> ast.BaseActionCall:
     def _make_simple_str_expr(res: Optional[str]) -> SimpleStrExpr:
         return SimpleStrExpr(
@@ -663,10 +663,10 @@ def _make_ast_call(
 
 
 def _make_ast_inputs(
-    args: Mapping[str, Tuple[Optional[Union[bool, int, float, str]], InputType]]
+    args: Mapping[str, Tuple[Optional[Union[bool, int, float, str]], InputType]],
 ) -> Mapping[str, ast.Input]:
     def _make_opt_primitive_expr(
-        res: Optional[Union[bool, int, float, str]]
+        res: Optional[Union[bool, int, float, str]],
     ) -> SimpleOptPrimitiveExpr:
         return SimpleOptPrimitiveExpr(
             Pos(0, 0, LocalPath("fake")), Pos(0, 0, LocalPath("fake")), res
