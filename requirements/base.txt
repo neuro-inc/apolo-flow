@@ -3,7 +3,7 @@ apolo-cli==25.6.0
 apolo-extras==24.10.0
 click==8.1.8
 funcparserlib==1.0.1
-graphviz==0.20.3
+graphviz==0.21
 humanize==4.12.3
 pyyaml==6.0.2
 rich==14.0.0
