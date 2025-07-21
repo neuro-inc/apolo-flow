@@ -5,7 +5,7 @@ jsonschema==4.25.0
 pre-commit==4.2.0
 pytest==8.4.1
 pytest-aiohttp==1.1.0
-pytest-asyncio==1.0.0
+pytest-asyncio==1.1.0
 pytest-xdist==3.8.0
 re-assert==1.1.0
 towncrier==24.8.0
