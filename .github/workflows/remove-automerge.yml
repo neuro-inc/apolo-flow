@@ -7,6 +7,7 @@ on:
       - completed
 
 permissions:
+  issues: write
   pull-requests: write
   contents: write
 
@@ -18,11 +19,6 @@ jobs:
             github.event.workflow.pull_requests[0].auto_merge != null &&
             contains(github.event.pull_requests[0].labels.*.name, 'dependencies') }}
     steps:
-    - id: generate_token
-      uses: tibdex/github-app-token@v2
-      with:
-        app_id: ${{ secrets.BOT_APP_ID }}
-        private_key: ${{ secrets.BOT_PRIVATE_KEY }}
     - name: PR number
       run: echo "$PR_NUMBER"
       env:
@@ -32,5 +28,5 @@ jobs:
       run: |
         gh pr merge --disable-auto "$PR_NUMBER"
       env:
-        GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PR_NUMBER: ${{ github.event.workflow.pull_requests[0].number }}
