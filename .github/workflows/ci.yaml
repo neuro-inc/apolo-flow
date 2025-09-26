@@ -245,14 +245,3 @@ jobs:
         run: |
           python -m pip install twine
           twine upload dist/*
-      - name: Make publish neuro dist
-        # publishing neuro-flow for backward compatibility
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_NEURO_TOKEN }}
-        run: |
-          rm -r dist build
-          python -m pip install twine
-          sed -i 's/name = apolo-flow/name = neuro-flow/g' setup.cfg
-          python setup.py sdist bdist_wheel
-          twine upload dist/*
