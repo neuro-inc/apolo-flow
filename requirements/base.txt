@@ -1,7 +1,7 @@
 -e .
 apolo-cli==25.9.1
 apolo-extras==25.9.0
-click==8.1.8
+click==8.3.0
 funcparserlib==1.0.1
 graphviz==0.21
 humanize==4.13.0
