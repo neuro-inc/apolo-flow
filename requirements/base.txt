@@ -4,7 +4,7 @@ apolo-extras==25.9.0
 click==8.3.0
 funcparserlib==1.0.1
 graphviz==0.21
-humanize==4.13.0
+humanize==4.14.0
 pyyaml==6.0.3
 rich==14.2.0
 trafaret==2.1.1
