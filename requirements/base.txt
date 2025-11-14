@@ -1,5 +1,5 @@
 -e .
-apolo-cli==25.11.0
+apolo-cli==25.11.1
 apolo-extras==25.9.0
 click==8.3.0
 funcparserlib==1.0.1
