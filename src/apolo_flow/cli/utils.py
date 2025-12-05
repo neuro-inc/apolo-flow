@@ -6,8 +6,9 @@ from apolo_cli.asyncio_utils import Runner
 from apolo_sdk import ResourceNotFound
 from asyncio import iscoroutinefunction
 from click.types import convert_type
+from collections.abc import Awaitable, Callable, Iterator
 from contextlib import contextmanager
-from typing import Any, Awaitable, Callable, Iterator, TypeVar
+from typing import Any, TypeVar
 from typing_extensions import ParamSpec
 
 from apolo_flow.storage.base import Storage
@@ -42,7 +43,7 @@ def wrap_async(
                 return runner.run(callback(*args, **kwargs))
 
         if pass_obj:
-            wrapper = click.pass_obj(wrapper)  # type: ignore[assignment]
+            wrapper = click.pass_obj(wrapper)  # type: ignore[assignment, arg-type]
 
         return wrapper
 

@@ -34,7 +34,7 @@ class Cache(BaseModel, use_enum_values=True, extra="forbid"):
 
 
 class Param(BaseModel, use_enum_values=True, extra="forbid"):
-    default: LiteralT | None | SkipJsonSchema[None] = Field(
+    default: SkipJsonSchema[None] | LiteralT | None = Field(
         default=None, json_schema_extra=pop_default_from_schema
     )
     descr: str | SkipJsonSchema[None] = Field(

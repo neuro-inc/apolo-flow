@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from random import random
-from typing import Optional
 
 
 DATETIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
@@ -17,7 +16,7 @@ def get_handler() -> logging.FileHandler:
     return _get_handler()
 
 
-_file_path_cached: Optional[Path] = None
+_file_path_cached: Path | None = None
 
 
 def get_log_file_path() -> Path:

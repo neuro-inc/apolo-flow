@@ -11,21 +11,8 @@ import abc
 import enum
 import logging
 import yaml
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    TextIO,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from collections.abc import Callable, Mapping, Sequence
+from typing import Any, Generic, TextIO, TypeVar, cast
 from yaml.composer import Composer
 from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.parser import Parser
@@ -122,7 +109,7 @@ def mark2pos(mark: yaml.Mark) -> Pos:
 
 
 class SimpleCompound(Generic[_T, _Container], abc.ABC):
-    def __init__(self, factory: Type[Expr[_T]]) -> None:
+    def __init__(self, factory: type[Expr[_T]]) -> None:
         self._factory = factory
 
     @abc.abstractmethod
@@ -215,7 +202,7 @@ class IdMapping(SimpleCompound[_T, Mapping[str, Expr[_T]]]):
 class ExprOrSeq(SimpleCompound[_T, BaseExpr[SequenceT]]):
     def __init__(
         self,
-        item_expr_factory: Type[Expr[_T]],
+        item_expr_factory: type[Expr[_T]],
         item_value_factory: Callable[[TypeT], TypeT],
     ) -> None:
         super().__init__(item_expr_factory)
@@ -238,7 +225,7 @@ class ExprOrSeq(SimpleCompound[_T, BaseExpr[SequenceT]]):
 class ExprOrMapping(SimpleCompound[_T, BaseExpr[MappingT]]):
     def __init__(
         self,
-        item_expr_factory: Type[Expr[_T]],
+        item_expr_factory: type[Expr[_T]],
         item_value_factory: Callable[[TypeT], TypeT],
     ) -> None:
         super().__init__(item_expr_factory)
@@ -272,19 +259,20 @@ def parse_dict(
     ctor: _CtorType,
     node: yaml.MappingNode,
     keys: Mapping[str, Any],
-    res_type: Type[_AstType],
+    res_type: type[_AstType],
     *,
-    ret_name: Optional[str] = None,
-    extra: Optional[Mapping[str, Union[str, LocalPath]]] = None,
-    preprocess: Optional[
-        Callable[[_CtorType, yaml.MappingNode, Dict[str, Any]], Dict[str, Any]]
-    ] = None,
-    find_res_type: Optional[
+    ret_name: str | None = None,
+    extra: Mapping[str, str | LocalPath] | None = None,
+    preprocess: (
+        Callable[[_CtorType, yaml.MappingNode, dict[str, Any]], dict[str, Any]] | None
+    ) = None,
+    find_res_type: (
         Callable[
-            [_CtorType, yaml.MappingNode, Type[_AstType], Dict[str, Any]],
-            Type[_AstType],
+            [_CtorType, yaml.MappingNode, type[_AstType], dict[str, Any]],
+            type[_AstType],
         ]
-    ] = None,
+        | None
+    ) = None,
 ) -> _AstType:
     if extra is None:
         extra = {}
@@ -345,7 +333,7 @@ def parse_dict(
         res_type = find_res_type(ctor, node, res_type, dict(data))
         ret_name = res_type.__name__
 
-    optional_fields: Dict[str, Any] = {}
+    optional_fields: dict[str, Any] = {}
     found_fields = data.keys() | {"_start", "_end"}
     field_names = set()
     for f in dataclasses.fields(res_type):
@@ -357,11 +345,7 @@ def parse_dict(
             item_ctor = keys[key]
             if f.default is not dataclasses.MISSING:
                 optional_fields[f.name] = f.default
-            elif (
-                item_ctor is None
-                or isinstance(item_ctor, SimpleCompound)
-                or isinstance(item_ctor, ast.Base)
-            ):
+            elif item_ctor is None or isinstance(item_ctor, (SimpleCompound, ast.Base)):
                 if f.metadata.get("allow_none", False):
                     optional_fields[f.name] = None
                 else:
@@ -464,7 +448,7 @@ def parse_volume(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Volume:
 
 def parse_volumes(
     ctor: BaseConstructor, node: yaml.MappingNode
-) -> Dict[str, ast.Volume]:
+) -> dict[str, ast.Volume]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -496,7 +480,7 @@ def parse_image(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Image:
     )
 
 
-def parse_images(ctor: BaseConstructor, node: yaml.MappingNode) -> Dict[str, ast.Image]:
+def parse_images(ctor: BaseConstructor, node: yaml.MappingNode) -> dict[str, ast.Image]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -524,7 +508,7 @@ FlowLoader.add_constructor("flow:task_needs_key", parse_needs_key)  # type: igno
 
 def parse_needs(
     ctor: BaseConstructor, node: yaml.Node
-) -> Optional[Mapping[IdExpr, NeedsLevel]]:
+) -> Mapping[IdExpr, NeedsLevel] | None:
     if isinstance(node, yaml.MappingNode):
 
         def _factory(_start: Pos, _end: Pos, value: Any) -> NeedsLevel:
@@ -554,7 +538,7 @@ def parse_exc_inc(
             node.start_mark,
         )
     builder = IdMapping(PrimitiveExpr)
-    ret: List[Mapping[str, PrimitiveExpr]] = []
+    ret: list[Mapping[str, PrimitiveExpr]] = []
     for v in node.value:
         ret.append(builder.construct(ctor, v))  # type: ignore[arg-type]
     return ret
@@ -644,7 +628,7 @@ EXEC_UNIT = {
     "restart": OptRestartPolicyExpr,
 }
 
-EXEC_UNIT_MIXIN: Dict[str, Any] = {
+EXEC_UNIT_MIXIN: dict[str, Any] = {
     **EXEC_UNIT,
     "mixins": SimpleSeq(StrExpr),
 }
@@ -659,7 +643,7 @@ JOB_MIXIN = {
     "mixins": SimpleSeq(StrExpr),
 }
 
-JOB: Dict[str, Any] = {
+JOB: dict[str, Any] = {
     **EXEC_UNIT,
     "detach": OptBoolExpr,
     "browse": OptBoolExpr,
@@ -683,7 +667,7 @@ JOB_MODULE_CALL = {
 
 
 def check_extra(
-    node: yaml.Node, dct: Dict[str, Any], ret: Dict[str, Any], name: str
+    node: yaml.Node, dct: dict[str, Any], ret: dict[str, Any], name: str
 ) -> None:
     diff = dct.keys() - ret.keys()
     if diff:
@@ -693,8 +677,8 @@ def check_extra(
 
 
 def select_shells(
-    ctor: BaseConstructor, node: yaml.MappingNode, dct: Dict[str, Any]
-) -> Dict[str, Any]:
+    ctor: BaseConstructor, node: yaml.MappingNode, dct: dict[str, Any]
+) -> dict[str, Any]:
     found = {k for k in dct if k in ("cmd", "bash", "python")}
     if len(found) > 1:
         raise ConstructorError(
@@ -713,8 +697,8 @@ def select_shells(
 
 
 def select_job_or_action_or_module(
-    ctor: BaseConstructor, node: yaml.MappingNode, dct: Dict[str, Any]
-) -> Dict[str, Any]:
+    ctor: BaseConstructor, node: yaml.MappingNode, dct: dict[str, Any]
+) -> dict[str, Any]:
     if "module" in dct:
         ret = {k: v for k, v in dct.items() if k in JOB_MODULE_CALL}
         check_extra(node, dct, ret, "module call")
@@ -734,9 +718,9 @@ JOB_OR_ACTION_OR_MODULE = {**JOB, **JOB_ACTION_CALL, **JOB_MODULE_CALL}
 def find_job_type(
     ctor: BaseConstructor,
     node: yaml.MappingNode,
-    res_type: Type[ast.Base],
-    arg: Dict[str, Any],
-) -> Union[Type[ast.Job], Type[ast.JobActionCall], Type[ast.JobModuleCall]]:
+    res_type: type[ast.Base],
+    arg: dict[str, Any],
+) -> type[ast.Job] | type[ast.JobActionCall] | type[ast.JobModuleCall]:
     if arg.get("module") is not None:
         return ast.JobModuleCall
     if arg.get("action") is not None:
@@ -746,9 +730,9 @@ def find_job_type(
 
 def parse_job(
     ctor: BaseConstructor, node: yaml.MappingNode
-) -> Union[ast.Job, ast.JobActionCall, ast.JobModuleCall]:
+) -> ast.Job | ast.JobActionCall | ast.JobModuleCall:
     return cast(
-        Union[ast.Job, ast.JobActionCall, ast.JobModuleCall],
+        ast.Job | ast.JobActionCall | ast.JobModuleCall,
         parse_dict(
             ctor,
             node,
@@ -762,7 +746,7 @@ def parse_job(
 
 def parse_jobs(
     ctor: BaseConstructor, node: yaml.MappingNode
-) -> Dict[str, Union[ast.Job, ast.JobActionCall, ast.JobModuleCall]]:
+) -> dict[str, ast.Job | ast.JobActionCall | ast.JobModuleCall]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -773,7 +757,7 @@ def parse_jobs(
 
 def parse_mixin(
     ctor: FlowLoader, node: yaml.MappingNode
-) -> Union[ast.JobMixin, ast.TaskMixin]:
+) -> ast.JobMixin | ast.TaskMixin:
     if ctor._kind == ast.FlowKind.LIVE:
         return parse_dict(
             ctor,
@@ -796,7 +780,7 @@ def parse_mixin(
 
 def parse_mixins(
     ctor: FlowLoader, node: yaml.MappingNode
-) -> Dict[str, Union[ast.JobMixin, ast.TaskMixin]]:
+) -> dict[str, ast.JobMixin | ast.TaskMixin]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -852,8 +836,8 @@ TASK_OR_ACTION_OR_MODULE = {**TASK, **TASK_ACTION_CALL, **TASK_MODULE_CALL}
 
 
 def select_task_or_action_or_module(
-    ctor: BaseConstructor, node: yaml.MappingNode, dct: Dict[str, Any]
-) -> Dict[str, Any]:
+    ctor: BaseConstructor, node: yaml.MappingNode, dct: dict[str, Any]
+) -> dict[str, Any]:
     if "module" in dct:
         ret = {k: v for k, v in dct.items() if k in TASK_MODULE_CALL}
         check_extra(node, dct, ret, "module call")
@@ -870,9 +854,9 @@ def select_task_or_action_or_module(
 def find_task_type(
     ctor: BaseConstructor,
     node: yaml.MappingNode,
-    res_type: Type[ast.Base],
-    arg: Dict[str, Any],
-) -> Union[Type[ast.Task], Type[ast.TaskActionCall], Type[ast.TaskModuleCall]]:
+    res_type: type[ast.Base],
+    arg: dict[str, Any],
+) -> type[ast.Task] | type[ast.TaskActionCall] | type[ast.TaskModuleCall]:
     if arg.get("module") is not None:
         return ast.TaskModuleCall
     if arg.get("action") is not None:
@@ -969,7 +953,7 @@ def parse_param(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Param:
     return parse_dict(ctor, node, PARAMS, ast.Param)
 
 
-def parse_params(ctor: BaseConstructor, node: yaml.MappingNode) -> Dict[str, ast.Param]:
+def parse_params(ctor: BaseConstructor, node: yaml.MappingNode) -> dict[str, ast.Param]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -1000,9 +984,9 @@ FlowLoader.add_constructor("flow:params", parse_params)  # type: ignore
 def find_flow_type(
     ctor: BaseConstructor,
     node: yaml.MappingNode,
-    res_type: Type[ast.BaseFlow],
-    arg: Dict[str, Any],
-) -> Type[ast.BaseFlow]:
+    res_type: type[ast.BaseFlow],
+    arg: dict[str, Any],
+) -> type[ast.BaseFlow]:
     kind = arg.get("kind")
     if kind is None:
         raise ConstructorError(
@@ -1070,7 +1054,7 @@ def parse_batch(workspace: LocalPath, config_file: LocalPath) -> ast.BatchFlow:
         return parse_batch_stream(f)
 
 
-def find_workspace(path: Optional[Union[LocalPath, str]]) -> ConfigDir:
+def find_workspace(path: LocalPath | str | None) -> ConfigDir:
     # Find live config file, starting from path.
     # Return a project root folder and a config folder.
     #
@@ -1147,7 +1131,7 @@ def parse_action_input(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Inp
 
 def parse_action_inputs(
     ctor: BaseConstructor, node: yaml.MappingNode
-) -> Dict[str, ast.Input]:
+) -> dict[str, ast.Input]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)
@@ -1178,8 +1162,8 @@ def parse_action_output(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Ou
 @dataclasses.dataclass(frozen=True)
 class ParsedActionOutputs(ast.Base):
     # Temporary container. Mapped to real ast in preprocess_action
-    needs: Optional[Sequence[IdExpr]]
-    values: Optional[Mapping[str, ast.Output]]
+    needs: Sequence[IdExpr] | None
+    values: Mapping[str, ast.Output] | None
 
 
 def parse_action_outputs(
@@ -1284,16 +1268,16 @@ BASE_ACTION = {
     "kind": ast.ActionKind,
 }
 
-LIVE_ACTION: Dict[str, Any] = {"job": None, **BASE_ACTION}
+LIVE_ACTION: dict[str, Any] = {"job": None, **BASE_ACTION}
 
-BATCH_ACTION: Dict[str, Any] = {
+BATCH_ACTION: dict[str, Any] = {
     "cache": None,
     "images": None,
     "tasks": None,
     **BASE_ACTION,
 }
 
-STATEFUL_ACTION: Dict[str, Any] = {
+STATEFUL_ACTION: dict[str, Any] = {
     "cache": None,
     "main": None,
     "post": None,
@@ -1301,7 +1285,7 @@ STATEFUL_ACTION: Dict[str, Any] = {
     **BASE_ACTION,
 }
 
-LOCAL_ACTION: Dict[str, Any] = {
+LOCAL_ACTION: dict[str, Any] = {
     "cmd": StrExpr,
     "bash": OptBashExpr,
     "python": OptPythonExpr,
@@ -1316,7 +1300,7 @@ ACTION = {
 }
 
 
-def _deep_get(node: yaml.Node, path: Sequence[str]) -> Optional[yaml.Node]:
+def _deep_get(node: yaml.Node, path: Sequence[str]) -> yaml.Node | None:
     if not path:
         return node
     if not isinstance(node, yaml.MappingNode):
@@ -1329,11 +1313,11 @@ def _deep_get(node: yaml.Node, path: Sequence[str]) -> Optional[yaml.Node]:
 
 
 def select_action(
-    ctor: BaseConstructor, node: yaml.MappingNode, dct: Dict[str, Any]
-) -> Dict[str, Any]:
+    ctor: BaseConstructor, node: yaml.MappingNode, dct: dict[str, Any]
+) -> dict[str, Any]:
     kind = dct.get("kind")
 
-    ret: Dict[str, Any]
+    ret: dict[str, Any]
     if kind == ast.ActionKind.LIVE:
         ret = {k: v for k, v in dct.items() if k in LIVE_ACTION}
         check_extra(node, dct, ret, f"{kind.value} action")
@@ -1360,7 +1344,7 @@ def select_action(
                 node.start_mark,
             )
 
-    outputs_tmp: Optional[ParsedActionOutputs] = dct.get("outputs")
+    outputs_tmp: ParsedActionOutputs | None = dct.get("outputs")
     needs_list_node = _deep_get(node, ("outputs", "needs"))
 
     if outputs_tmp and kind != ast.ActionKind.BATCH:
@@ -1388,16 +1372,16 @@ def select_action(
 def find_action_type(
     ctor: BaseConstructor,
     node: yaml.MappingNode,
-    res_type: Type[ast.BaseAction],
-    arg: Dict[str, Any],
-) -> Type[ast.BaseAction]:
+    res_type: type[ast.BaseAction],
+    arg: dict[str, Any],
+) -> type[ast.BaseAction]:
     kind = arg.get("kind")
     if kind is None:
         raise ConstructorError(
             f"missing mandatory key 'kind'",
             node.start_mark,
         )
-    ret: Type[ast.BaseAction]
+    ret: type[ast.BaseAction]
     if kind == ast.ActionKind.LIVE:
         ret = ast.LiveAction
     elif kind == ast.ActionKind.BATCH:
@@ -1551,7 +1535,7 @@ def parse_project_defaults(
 
 def parse_project_mixins(
     ctor: FlowLoader, node: yaml.MappingNode
-) -> Dict[str, ast.ExecUnitMixin]:
+) -> dict[str, ast.ExecUnitMixin]:
     ret = {}
     for k, v in node.value:
         key = ctor.construct_id(k)

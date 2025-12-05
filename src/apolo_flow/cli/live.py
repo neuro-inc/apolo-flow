@@ -1,7 +1,7 @@
 import apolo_sdk
 import click
+from collections.abc import Sequence
 from contextlib import AsyncExitStack
-from typing import List, Optional, Sequence, Tuple
 
 from apolo_flow.cli.click_types import (
     LIVE_JOB,
@@ -53,10 +53,10 @@ async def ps(
 async def run(
     root: Root,
     job_id: str,
-    suffix: Optional[str],
+    suffix: str | None,
     dry_run: bool,
-    args: Optional[Tuple[str]],
-    param: List[Tuple[str, str]],
+    args: tuple[str] | None,
+    param: list[tuple[str, str]],
 ) -> None:
     """Run a job.
 
@@ -78,7 +78,7 @@ async def run(
             job_id,
             suffix=suffix,
             args=args,
-            params={key: value for key, value in param},
+            params=dict(param),
         )
 
 
@@ -89,7 +89,7 @@ async def run(
 async def logs(
     root: Root,
     job_id: str,
-    suffix: Optional[str],
+    suffix: str | None,
 ) -> None:
     """Print logs.
 
@@ -111,7 +111,7 @@ async def logs(
 async def status(
     root: Root,
     job_id: str,
-    suffix: Optional[str],
+    suffix: str | None,
 ) -> None:
     """Show job status.
 
@@ -133,7 +133,7 @@ async def status(
 async def kill(
     root: Root,
     job_id: str,
-    suffix: Optional[str],
+    suffix: str | None,
 ) -> None:
     """Kill a job.
 

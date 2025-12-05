@@ -4,8 +4,9 @@ import pytest
 import sys
 import textwrap
 from apolo_sdk import Client
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager, AsyncIterator, Callable, Mapping
+from typing import AsyncContextManager
 
 from apolo_flow.batch_runner import (
     ImageRefNotUniqueError,

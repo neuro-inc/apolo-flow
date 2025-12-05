@@ -1,8 +1,8 @@
 import pytest
 from apolo_sdk import Client
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, List
-from typing_extensions import Final
+from typing import Any, Final
 
 from apolo_flow.context import DepCtx
 from apolo_flow.expr import (
@@ -25,7 +25,7 @@ START: Final = Pos(0, 0, FNAME)
 
 class DictContext(RootABC):
     def __init__(
-        self, dct: Dict[str, TypeT], client: Client, dry_run: bool = False
+        self, dct: dict[str, TypeT], client: Client, dry_run: bool = False
     ) -> None:
         self._dct = dct
         self._client = client
@@ -64,7 +64,7 @@ class DictContext(RootABC):
     ],
 )
 async def test_bool_evals(
-    expr: str, context: Dict[str, TypeT], result: bool, client: Client
+    expr: str, context: dict[str, TypeT], result: bool, client: Client
 ) -> None:
     parsed = PARSER.parse(list(tokenize("${{" + expr + "}}", START)))
     assert len(parsed) == 1
@@ -81,7 +81,7 @@ async def test_bool_evals(
     ],
 )
 async def test_arithmetic_evals(
-    expr: str, context: Dict[str, TypeT], result: int, client: Client
+    expr: str, context: dict[str, TypeT], result: int, client: Client
 ) -> None:
     parsed = PARSER.parse(list(tokenize("${{" + expr + "}}", START)))
     assert len(parsed) == 1
@@ -108,7 +108,7 @@ async def test_arithmetic_evals(
     ],
 )
 async def test_success_func(
-    expr: str, statuses: List[TaskStatus], result: bool, client: Client
+    expr: str, statuses: list[TaskStatus], result: bool, client: Client
 ) -> None:
     context = {
         "needs": {
@@ -146,7 +146,7 @@ async def test_success_func(
     ],
 )
 async def test_failure_func(
-    expr: str, statuses: List[TaskStatus], result: bool, client: Client
+    expr: str, statuses: list[TaskStatus], result: bool, client: Client
 ) -> None:
     context = {
         "needs": {
@@ -254,7 +254,7 @@ async def test_dict_trailing_comma(client: Client) -> None:
     ],
 )
 async def test_if_else_expr(
-    client: Client, expr: str, context: Dict[str, Any], result: Any
+    client: Client, expr: str, context: dict[str, Any], result: Any
 ) -> None:
     parsed = PARSER.parse(list(tokenize("${{" + expr + "}}", START)))
     assert len(parsed) == 1

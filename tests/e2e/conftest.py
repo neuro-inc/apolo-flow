@@ -11,9 +11,10 @@ import shutil
 import subprocess
 import sys
 from apolo_sdk import Config, get as api_get, login_with_token
+from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 from yarl import URL
 
 
@@ -33,7 +34,7 @@ def project_id() -> str:
     return f"e2e_proj_{secrets.token_hex(6)}_{make_date_flag()}"
 
 
-async def get_config(nmrc_path: Optional[Path]) -> Config:
+async def get_config(nmrc_path: Path | None) -> Config:
     __tracebackhide__ = True
     cluster = os.environ.get("E2E_CLUSTER")
     async with api_get(timeout=CLIENT_TIMEOUT, path=nmrc_path) as client:
@@ -43,7 +44,7 @@ async def get_config(nmrc_path: Optional[Path]) -> Config:
 
 
 @pytest.fixture
-async def api_config_data(api_config: Optional[pathlib.Path]) -> Config:
+async def api_config_data(api_config: pathlib.Path | None) -> Config:
     return await get_config(api_config)
 
 
@@ -80,7 +81,7 @@ def ws(
 
 
 @pytest.fixture
-async def api_config(tmp_path_factory: Any) -> AsyncIterator[Optional[pathlib.Path]]:
+async def api_config(tmp_path_factory: Any) -> AsyncIterator[pathlib.Path | None]:
     e2e_test_token = os.environ.get("E2E_USER_TOKEN")
     e2e_test_api_endpoint = os.environ.get(
         "E2E_API_ENDPOINT", "https://api.dev.apolo.us/api/v1"
@@ -104,13 +105,13 @@ class SysCap:
     err: str
 
 
-RunCLI = Callable[[List[str]], Awaitable[SysCap]]
+RunCLI = Callable[[list[str]], Awaitable[SysCap]]
 
 
 @pytest.fixture
-def _run_cli(ws: pathlib.Path, api_config: Optional[pathlib.Path]) -> RunCLI:
+def _run_cli(ws: pathlib.Path, api_config: pathlib.Path | None) -> RunCLI:
     async def _run(
-        arguments: List[str],
+        arguments: list[str],
     ) -> SysCap:
         if api_config:
             os.environ["NEUROMATION_CONFIG"] = str(api_config)
@@ -160,7 +161,7 @@ def make_date_flag() -> str:
 
 
 @pytest.fixture(scope="session")
-def _drop_once_flag() -> Dict[str, bool]:
+def _drop_once_flag() -> dict[str, bool]:
     return {}
 
 
@@ -168,7 +169,7 @@ def _drop_once_flag() -> Dict[str, bool]:
 # https://github.com/neuro-inc/neuro-cli/issues/2913
 # @pytest.fixture(autouse=True)
 async def drop_old_test_images(
-    run_apolo_cli: RunCLI, _drop_once_flag: Dict[str, bool]
+    run_apolo_cli: RunCLI, _drop_once_flag: dict[str, bool]
 ) -> None:
     if _drop_once_flag.get("cleaned_images"):
         return
@@ -204,7 +205,7 @@ async def drop_old_test_images(
 
 @pytest.fixture(autouse=True)
 async def drop_old_roles(
-    run_apolo_cli: RunCLI, _drop_once_flag: Dict[str, bool], username: str
+    run_apolo_cli: RunCLI, _drop_once_flag: dict[str, bool], username: str
 ) -> None:
     if _drop_once_flag.get("cleaned_roles"):
         return

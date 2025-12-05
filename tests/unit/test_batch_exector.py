@@ -21,24 +21,20 @@ from apolo_sdk import (
     Volume,
     get as api_get,
 )
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Mapping,
+    Sequence,
+)
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from rich import get_console
 from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock
 from yarl import URL
 
@@ -60,9 +56,9 @@ MakeBatchRunner = Callable[[Path], Awaitable[BatchRunner]]
 class JobsMock:
     # Mock for client.jobs subsystem
 
-    _data: Dict[str, JobDescription]
-    _outputs: Dict[str, bytes]
-    exception_on_status: Optional[BaseException]
+    _data: dict[str, JobDescription]
+    _outputs: dict[str, bytes]
+    exception_on_status: BaseException | None
 
     def __init__(self) -> None:
         self.id_counter = 0
@@ -152,25 +148,25 @@ class JobsMock:
         *,
         image: RemoteImage,
         preset_name: str,
-        entrypoint: Optional[str] = None,
-        command: Optional[str] = None,
-        working_dir: Optional[str] = None,
-        http: Optional[HTTPPort] = None,
-        env: Optional[Mapping[str, str]] = None,
+        entrypoint: str | None = None,
+        command: str | None = None,
+        working_dir: str | None = None,
+        http: HTTPPort | None = None,
+        env: Mapping[str, str] | None = None,
         volumes: Sequence[Volume] = (),
-        secret_env: Optional[Mapping[str, URL]] = None,
+        secret_env: Mapping[str, URL] | None = None,
         secret_files: Sequence[SecretFile] = (),
         disk_volumes: Sequence[DiskVolume] = (),
         tty: bool = False,
         shm: bool = False,
-        name: Optional[str] = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
-        description: Optional[str] = None,
+        description: str | None = None,
         pass_config: bool = False,
         wait_for_jobs_quota: bool = False,
-        schedule_timeout: Optional[float] = None,
+        schedule_timeout: float | None = None,
         restart_policy: JobRestartPolicy = JobRestartPolicy.NEVER,
-        life_span: Optional[float] = None,
+        life_span: float | None = None,
         privileged: bool = False,
         project_name: str = "test-project",
     ) -> JobDescription:
@@ -219,6 +215,7 @@ class JobsMock:
             pass_config=pass_config,
             privileged=privileged,
             schedule_timeout=schedule_timeout,
+            namespace="default",  # dropme later maybe
         )
         return self._data[job_id]
 
@@ -249,7 +246,7 @@ class JobsMock:
 
 class ImagesMock:
     def __init__(self) -> None:
-        self.known_images: Dict[str, Tag] = {}
+        self.known_images: dict[str, Tag] = {}
 
     async def tag_info(self, remote: RemoteImage) -> Tag:
         tag = self.known_images.get(str(remote))
@@ -273,7 +270,7 @@ class FakeGlobalOptions:
 
 class MockCliRunner:
     def __init__(self) -> None:
-        self.runs: List[Tuple[str, ...]] = []
+        self.runs: list[tuple[str, ...]] = []
 
     async def run(self, *args: str) -> None:
         self.runs.append(args)
@@ -286,9 +283,9 @@ async def mock_apolo_cli_runner() -> MockCliRunner:
 
 class MockBuilder:
     def __init__(self, jobs_mock: JobsMock) -> None:
-        self.runs: List[Tuple[str, ...]] = []
+        self.runs: list[tuple[str, ...]] = []
         self.jobs = jobs_mock
-        self.ref2job: Dict[str, str] = {}
+        self.ref2job: dict[str, str] = {}
 
     async def run(self, *args: str) -> str:
         self.runs.append(args)
@@ -310,7 +307,7 @@ async def make_batch_runner(
     client: Client,
     mock_apolo_cli_runner: MockCliRunner,
 ) -> AsyncIterator[MakeBatchRunner]:
-    runner: Optional[BatchRunner] = None
+    runner: BatchRunner | None = None
 
     async def create(path: Path) -> BatchRunner:
         config_dir = ConfigDir(
@@ -402,7 +399,7 @@ def start_executor(
 
 
 RunExecutor = Callable[
-    [Path, str], Coroutine[Any, Any, Tuple[Dict[Tuple[str, ...], Task], TaskStatus]]
+    [Path, str], Coroutine[Any, Any, tuple[dict[tuple[str, ...], Task], TaskStatus]]
 ]
 
 
@@ -414,8 +411,8 @@ def run_executor(
     batch_storage: Storage,
 ) -> RunExecutor:
     async def run(
-        config_loc: Path, batch_name: str, args: Optional[Mapping[str, str]] = None
-    ) -> Tuple[Dict[Tuple[str, ...], Task], TaskStatus]:
+        config_loc: Path, batch_name: str, args: Mapping[str, str] | None = None
+    ) -> tuple[dict[tuple[str, ...], Task], TaskStatus]:
         runner = await make_batch_runner(config_loc)
         bake, _ = await runner._setup_bake(batch_name, args)
         status = await start_locals_executor(bake.id)
@@ -724,7 +721,7 @@ async def test_batch_matrix(
     assets: Path,
     run_executor: Callable[[Path, str], Coroutine[asyncio.Future[Any], None, None]],
     batch_name: str,
-    vars: List[Tuple[str, str]],
+    vars: list[tuple[str, str]],
 ) -> None:
     executor_task = asyncio.create_task(run_executor(assets, batch_name))
     for var_1, var_2 in vars:
@@ -758,7 +755,7 @@ async def test_batch_matrix_max_parallel(
     run_executor: Callable[[Path, str], Coroutine[asyncio.Future[Any], None, None]],
     batch_name: str,
     max_parallel: int,
-    vars: List[Tuple[str, str]],
+    vars: list[tuple[str, str]],
 ) -> None:
     executor_task = asyncio.create_task(run_executor(assets, batch_name))
     done, pending = await asyncio.wait(

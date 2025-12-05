@@ -2,7 +2,8 @@
 from dataclasses import dataclass, field
 
 import enum
-from typing import AbstractSet, Mapping, Optional, Sequence, Type, Union
+from collections.abc import Mapping, Sequence
+from typing import AbstractSet, Optional
 
 from .expr import (
     BaseExpr,
@@ -54,7 +55,7 @@ class CacheStrategy(enum.Enum):
 class Cache(Base):
     # 'default' for root BatchFlowDefaults,
     # 'inherit' for task definitions and actions
-    strategy: Optional[CacheStrategy] = field(metadata={"allow_none": True})
+    strategy: CacheStrategy | None = field(metadata={"allow_none": True})
     life_span: OptTimeDeltaExpr
     # TODO: maybe add extra key->value mapping for additional cache keys later
 
@@ -66,12 +67,10 @@ class Project(Base):
     owner: SimpleOptStrExpr  # user name can contain "-"
     role: SimpleOptStrExpr
 
-    images: Optional[Mapping[str, "Image"]] = field(metadata={"allow_none": True})
-    volumes: Optional[Mapping[str, "Volume"]] = field(metadata={"allow_none": True})
+    images: Mapping[str, "Image"] | None = field(metadata={"allow_none": True})
+    volumes: Mapping[str, "Volume"] | None = field(metadata={"allow_none": True})
     defaults: Optional["BatchFlowDefaults"] = field(metadata={"allow_none": True})
-    mixins: Optional[Mapping[str, "ExecUnitMixin"]] = field(
-        metadata={"allow_none": True}
-    )
+    mixins: Mapping[str, "ExecUnitMixin"] | None = field(metadata={"allow_none": True})
 
 
 # There are 'batch' for pipelined mode and 'live' for interactive one
@@ -96,9 +95,9 @@ class Image(Base):
     ref: ImageRefStrExpr  # Image reference, e.g. image:my-proj or neuromation/base@v1.6
     context: OptStrExpr
     dockerfile: OptStrExpr
-    build_args: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    build_args: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     build_preset: OptStrExpr
     force_rebuild: OptBoolExpr
     extra_kaniko_args: OptStrExpr
@@ -114,14 +113,14 @@ class ExecUnitMixin(WithSpecifiedFields, Base):
     entrypoint: OptStrExpr
     cmd: OptStrExpr
     workdir: OptRemotePathExpr
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
-    tags: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
+    tags: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     life_span: OptTimeDeltaExpr
     http_port: OptIntExpr
     http_auth: OptBoolExpr
     pass_config: OptBoolExpr
-    mixins: Optional[Sequence[StrExpr]] = field(metadata={"allow_none": True})
+    mixins: Sequence[StrExpr] | None = field(metadata={"allow_none": True})
     restart: OptRestartPolicyExpr
 
 
@@ -135,9 +134,9 @@ class ExecUnit(Base):
     entrypoint: OptStrExpr
     cmd: OptStrExpr
     workdir: OptRemotePathExpr
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
-    tags: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
+    tags: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     life_span: OptTimeDeltaExpr
     http_port: OptIntExpr
     http_auth: OptBoolExpr
@@ -176,7 +175,7 @@ class Param(Base):
 
 @dataclass(frozen=True)
 class JobBase(Base):
-    params: Optional[Mapping[str, Param]] = field(metadata={"allow_none": True})
+    params: Mapping[str, Param] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
@@ -189,19 +188,19 @@ class JobMixin(WithSpecifiedFields, Base):
     entrypoint: OptStrExpr
     cmd: OptStrExpr
     workdir: OptRemotePathExpr
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
-    tags: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
+    tags: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     life_span: OptTimeDeltaExpr
     http_port: OptIntExpr
     http_auth: OptBoolExpr
     pass_config: OptBoolExpr
     detach: OptBoolExpr
     browse: OptBoolExpr
-    port_forward: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    port_forward: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     multi: SimpleOptBoolExpr
-    params: Optional[Mapping[str, Param]] = field(metadata={"allow_none": True})
-    mixins: Optional[Sequence[StrExpr]] = field(metadata={"allow_none": True})
+    params: Mapping[str, Param] | None = field(metadata={"allow_none": True})
+    mixins: Sequence[StrExpr] | None = field(metadata={"allow_none": True})
     restart: OptRestartPolicyExpr
 
 
@@ -211,9 +210,9 @@ class Job(ExecUnit, WithSpecifiedFields, JobBase):
 
     detach: OptBoolExpr
     browse: OptBoolExpr
-    port_forward: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    port_forward: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     multi: SimpleOptBoolExpr
-    mixins: Optional[Sequence[StrExpr]] = field(metadata={"allow_none": True})
+    mixins: Sequence[StrExpr] | None = field(metadata={"allow_none": True})
 
 
 class NeedsLevel(enum.Enum):
@@ -228,20 +227,20 @@ class TaskBase(Base):
     # A set of steps, used in net mode
     # All steps share the same implicit persistent disk volume
 
-    needs: Optional[Mapping[IdExpr, NeedsLevel]] = field(metadata={"allow_none": True})
+    needs: Mapping[IdExpr, NeedsLevel] | None = field(metadata={"allow_none": True})
 
     # matrix? Do we need a build matrix? Yes probably.
 
-    strategy: Optional[Strategy] = field(metadata={"allow_none": True})
+    strategy: Strategy | None = field(metadata={"allow_none": True})
 
     # continue_on_error: OptBoolExpr
     enable: EnableExpr = field(metadata={"default_expr": "${{ success() }}"})
-    cache: Optional[Cache] = field(metadata={"allow_none": True})
+    cache: Cache | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
 class Task(ExecUnit, WithSpecifiedFields, TaskBase):
-    mixins: Optional[Sequence[StrExpr]] = field(metadata={"allow_none": True})
+    mixins: Sequence[StrExpr] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
@@ -254,31 +253,31 @@ class TaskMixin(WithSpecifiedFields, Base):
     entrypoint: OptStrExpr
     cmd: OptStrExpr
     workdir: OptRemotePathExpr
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
-    tags: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
+    tags: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     life_span: OptTimeDeltaExpr
     http_port: OptIntExpr
     http_auth: OptBoolExpr
     pass_config: OptBoolExpr
-    needs: Optional[Mapping[IdExpr, NeedsLevel]] = field(metadata={"allow_none": True})
-    strategy: Optional[Strategy] = field(metadata={"allow_none": True})
+    needs: Mapping[IdExpr, NeedsLevel] | None = field(metadata={"allow_none": True})
+    strategy: Strategy | None = field(metadata={"allow_none": True})
     enable: EnableExpr = field(metadata={"default_expr": "${{ success() }}"})
-    cache: Optional[Cache] = field(metadata={"allow_none": True})
-    mixins: Optional[Sequence[StrExpr]] = field(metadata={"allow_none": True})
+    cache: Cache | None = field(metadata={"allow_none": True})
+    mixins: Sequence[StrExpr] | None = field(metadata={"allow_none": True})
     restart: OptRestartPolicyExpr
 
 
 @dataclass(frozen=True)
 class BaseActionCall(Base):
     action: SimpleStrExpr  # action ref
-    args: Optional[Mapping[str, PrimitiveExpr]] = field(metadata={"allow_none": True})
+    args: Mapping[str, PrimitiveExpr] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
 class BaseModuleCall(Base):
     module: SimpleStrExpr  # action ref
-    args: Optional[Mapping[str, PrimitiveExpr]] = field(metadata={"allow_none": True})
+    args: Mapping[str, PrimitiveExpr] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
@@ -303,10 +302,10 @@ class TaskModuleCall(BaseModuleCall, TaskBase):
 
 @dataclass(frozen=True)
 class FlowDefaults(WithSpecifiedFields, Base):
-    tags: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    tags: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
 
-    env: Optional[BaseExpr[MappingT]] = field(metadata={"allow_none": True})
-    volumes: Optional[BaseExpr[SequenceT]] = field(metadata={"allow_none": True})
+    env: BaseExpr[MappingT] | None = field(metadata={"allow_none": True})
+    volumes: BaseExpr[SequenceT] | None = field(metadata={"allow_none": True})
     workdir: OptRemotePathExpr
 
     life_span: OptTimeDeltaExpr
@@ -319,7 +318,7 @@ class FlowDefaults(WithSpecifiedFields, Base):
 class BatchFlowDefaults(FlowDefaults):
     fail_fast: OptBoolExpr
     max_parallel: OptIntExpr
-    cache: Optional[Cache] = field(metadata={"allow_none": True})
+    cache: Cache | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
@@ -329,28 +328,28 @@ class BaseFlow(Base):
 
     title: SimpleOptStrExpr
 
-    images: Optional[Mapping[str, Image]] = field(metadata={"allow_none": True})
-    volumes: Optional[Mapping[str, Volume]] = field(metadata={"allow_none": True})
+    images: Mapping[str, Image] | None = field(metadata={"allow_none": True})
+    volumes: Mapping[str, Volume] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
 class LiveFlow(BaseFlow):
     # self.kind == Kind.Job
-    mixins: Optional[Mapping[str, JobMixin]] = field(metadata={"allow_none": True})
-    jobs: Mapping[str, Union[Job, JobActionCall, JobModuleCall]]
+    mixins: Mapping[str, JobMixin] | None = field(metadata={"allow_none": True})
+    jobs: Mapping[str, Job | JobActionCall | JobModuleCall]
 
-    defaults: Optional[FlowDefaults] = field(metadata={"allow_none": True})
+    defaults: FlowDefaults | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
 class BatchFlow(BaseFlow):
     # self.kind == Kind.Batch
     life_span: OptTimeDeltaExpr = field(metadata={"allow_none": True})
-    params: Optional[Mapping[str, Param]] = field(metadata={"allow_none": True})
-    mixins: Optional[Mapping[str, TaskMixin]] = field(metadata={"allow_none": True})
-    tasks: Sequence[Union[Task, TaskActionCall, TaskModuleCall]]
+    params: Mapping[str, Param] | None = field(metadata={"allow_none": True})
+    mixins: Mapping[str, TaskMixin] | None = field(metadata={"allow_none": True})
+    tasks: Sequence[Task | TaskActionCall | TaskModuleCall]
 
-    defaults: Optional[BatchFlowDefaults] = field(metadata={"allow_none": True})
+    defaults: BatchFlowDefaults | None = field(metadata={"allow_none": True})
 
 
 # Action
@@ -369,7 +368,7 @@ class InputType(enum.Enum):
     BOOL = "bool"
     STR = "str"
 
-    def to_type(self) -> Union[Type[str], Type[float], Type[int], Type[bool]]:
+    def to_type(self) -> type[str] | type[float] | type[int] | type[bool]:
         if self.value == "int":
             return int
         elif self.value == "float":
@@ -378,7 +377,7 @@ class InputType(enum.Enum):
             return bool
         elif self.value == "str":
             return str
-        assert False, "Not reachable"
+        raise AssertionError("Not reachable")
 
 
 @dataclass(frozen=True)
@@ -400,7 +399,7 @@ class BaseAction(Base):
     name: SimpleOptStrExpr
     author: SimpleOptStrExpr
     descr: SimpleOptStrExpr
-    inputs: Optional[Mapping[str, Input]] = field(metadata={"allow_none": True})
+    inputs: Mapping[str, Input] | None = field(metadata={"allow_none": True})
 
     kind: ActionKind
 
@@ -414,27 +413,27 @@ class LiveAction(BaseAction):
 class BatchActionOutputs(Base):
     # AST class is slightly different from YAML representation,
     # in YAML `values` mapping is embedded into the outputs itself.
-    values: Optional[Mapping[str, Output]] = field(metadata={"allow_none": True})
+    values: Mapping[str, Output] | None = field(metadata={"allow_none": True})
 
 
 @dataclass(frozen=True)
 class BatchAction(BaseAction):
-    outputs: Optional[BatchActionOutputs] = field(metadata={"allow_none": True})
-    cache: Optional[Cache] = field(metadata={"allow_none": True})
-    images: Optional[Mapping[str, Image]] = field(metadata={"allow_none": True})
+    outputs: BatchActionOutputs | None = field(metadata={"allow_none": True})
+    cache: Cache | None = field(metadata={"allow_none": True})
+    images: Mapping[str, Image] | None = field(metadata={"allow_none": True})
 
-    tasks: Sequence[Union[Task, TaskActionCall, TaskModuleCall]]
+    tasks: Sequence[Task | TaskActionCall | TaskModuleCall]
 
 
 @dataclass(frozen=True)
 class StatefulAction(BaseAction):
-    outputs: Optional[Mapping[str, Output]] = field(metadata={"allow_none": True})
+    outputs: Mapping[str, Output] | None = field(metadata={"allow_none": True})
     main: ExecUnit
-    post: Optional[ExecUnit] = field(metadata={"allow_none": True})
+    post: ExecUnit | None = field(metadata={"allow_none": True})
     post_if: EnableExpr = field(metadata={"default_expr": "${{ always() }}"})
 
 
 @dataclass(frozen=True)
 class LocalAction(BaseAction):
-    outputs: Optional[Mapping[str, Output]] = field(metadata={"allow_none": True})
+    outputs: Mapping[str, Output] | None = field(metadata={"allow_none": True})
     cmd: StrExpr

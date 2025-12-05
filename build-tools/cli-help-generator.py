@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 from textwrap import dedent
-from typing import Any, List
+from typing import Any
 
 from apolo_flow.cli.main import cli
 
@@ -25,9 +25,9 @@ class CommandInfo:
     usage: str = None
     short: str = None
     description: str = None
-    options: List[Option] = field(default_factory=list)
+    options: list[Option] = field(default_factory=list)
     examples: str = None
-    children: List[Any] = field(default_factory=list)  # CommandInfo
+    children: list[Any] = field(default_factory=list)  # CommandInfo
     is_group: bool = False
 
 
@@ -206,13 +206,12 @@ def main():
     output_file = sys.argv[2]
     filename = Path(output_file).name
 
-    with open(input_file) as input:
-        with open(output_file, "w") as output:
-            template = input.read()
-            info = parse_command(None, cli, ["apolo-flow"])
-            cli_doc = generate_command_markdown(info, "#", filename=filename)
-            generated_md = template.format(cli_doc=cli_doc)
-            output.write(generated_md)
+    with open(input_file) as input, open(output_file, "w") as output:
+        template = input.read()
+        info = parse_command(None, cli, ["apolo-flow"])
+        cli_doc = generate_command_markdown(info, "#", filename=filename)
+        generated_md = template.format(cli_doc=cli_doc)
+        output.write(generated_md)
 
 
 if __name__ == "__main__":

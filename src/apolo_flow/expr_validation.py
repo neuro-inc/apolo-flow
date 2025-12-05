@@ -3,7 +3,8 @@ import dataclasses
 import abc
 import collections
 from abc import abstractmethod
-from typing import AbstractSet, Any, Callable, Iterable, List, Optional, Tuple, Type
+from collections.abc import Callable, Iterable
+from typing import AbstractSet, Any
 from typing_extensions import get_type_hints as _get_hints
 
 from apolo_flow.context import Context, ModuleContext, TagsCtx
@@ -24,11 +25,11 @@ def get_hints(obj: Any) -> Any:
 
 def validate_expr(
     expr: Expr[Any],
-    context: Type[Context],
+    context: type[Context],
     known_needs: AbstractSet[str] = frozenset(),
     known_inputs: AbstractSet[str] = frozenset(),
-) -> List[EvalError]:
-    errors: List[EvalError] = []
+) -> list[EvalError]:
+    errors: list[EvalError] = []
     for lookup, local_vars in iter_lookups(expr):
         validate_lookup(
             lookup, context, errors.append, known_needs, known_inputs, local_vars
@@ -36,10 +37,10 @@ def validate_expr(
     return errors
 
 
-def iter_lookups(expr: Expr[Any]) -> Iterable[Tuple[Lookup, AbstractSet[str]]]:
+def iter_lookups(expr: Expr[Any]) -> Iterable[tuple[Lookup, AbstractSet[str]]]:
     def _iter_lookups(
         top_level_items: Iterable[Item], local_vars: AbstractSet[str] = frozenset()
-    ) -> Iterable[Tuple[Lookup, AbstractSet[str]]]:
+    ) -> Iterable[tuple[Lookup, AbstractSet[str]]]:
         for item in top_level_items:
             if isinstance(item, Lookup):
                 yield item, local_vars
@@ -51,7 +52,7 @@ def iter_lookups(expr: Expr[Any]) -> Iterable[Tuple[Lookup, AbstractSet[str]]]:
     return _iter_lookups(getattr(expr, "_parsed", None) or [])
 
 
-def _get_dataclass_field_type(dataclass: Any, attr: str) -> Optional[Any]:
+def _get_dataclass_field_type(dataclass: Any, attr: str) -> Any | None:
     if getattr(dataclass, "__origin__", None) is not None:
         # This is generic, probably ModuleContext
         real_class = dataclass.__origin__
@@ -71,15 +72,15 @@ def _get_dataclass_field_type(dataclass: Any, attr: str) -> Optional[Any]:
 
 class GetterVisitor(abc.ABC):
     @abstractmethod
-    def dataclass(self, obj: Any) -> Optional[Any]:
+    def dataclass(self, obj: Any) -> Any | None:
         pass
 
     @abstractmethod
-    def mapping(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def mapping(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         pass
 
     @abstractmethod
-    def set(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def set(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         pass
 
 
@@ -104,7 +105,7 @@ class AttrGetterVisitor(GetterVisitor):
         self._known_inputs = known_inputs
         self._getter = getter
 
-    def dataclass(self, obj: Any) -> Optional[Any]:
+    def dataclass(self, obj: Any) -> Any | None:
         new_ctx = _get_dataclass_field_type(obj, self._getter.name)
         if new_ctx is None:
             self._record_error(
@@ -117,7 +118,7 @@ class AttrGetterVisitor(GetterVisitor):
             )
         return new_ctx
 
-    def mapping(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def mapping(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         if metadata == "NeedsCtx" and self._getter.name not in self._known_needs:
             self._record_error(
                 EvalError(
@@ -137,7 +138,7 @@ class AttrGetterVisitor(GetterVisitor):
             )
         return type_args[1]
 
-    def set(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def set(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         self._record_error(
             EvalError(
                 f"'{metadata}' has no attribute " f"'{self._getter.name}'",
@@ -153,7 +154,7 @@ class ItemGetterVisitor(GetterVisitor):
         self._record_error = record_error
         self._getter = getter
 
-    def dataclass(self, obj: Any) -> Optional[Any]:
+    def dataclass(self, obj: Any) -> Any | None:
         self._record_error(
             EvalError(
                 f"'{_format_obj_name(obj)}' is not subscriptable",
@@ -163,10 +164,10 @@ class ItemGetterVisitor(GetterVisitor):
         )
         return None
 
-    def mapping(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def mapping(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         return type_args[1]
 
-    def set(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
+    def set(self, type_args: tuple[Any, ...], metadata: str) -> Any | None:
         self._record_error(
             EvalError(
                 f"'{metadata}' is not subscriptable",
@@ -179,7 +180,7 @@ class ItemGetterVisitor(GetterVisitor):
 
 def validate_lookup(
     lookup: Lookup,
-    context: Type[Context],
+    context: type[Context],
     record_error: Callable[[EvalError], None],
     known_needs: AbstractSet[str],
     known_inputs: AbstractSet[str],

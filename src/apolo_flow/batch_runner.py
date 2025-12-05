@@ -6,6 +6,7 @@ import datetime
 from apolo_cli import __version__ as cli_version
 from apolo_sdk import Client, ResourceNotFound, __version__ as sdk_version
 from collections import defaultdict
+from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from graphviz import Digraph
 from operator import attrgetter
 from rich import box
@@ -13,22 +14,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from types import TracebackType
-from typing import (
-    AbstractSet,
-    AsyncContextManager,
-    AsyncIterator,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
+from typing import AbstractSet, AsyncContextManager, cast
 from yarl import URL
 
 import apolo_flow
@@ -89,8 +75,8 @@ class BakeFailedError(Exception):
         self.status = status
 
 
-async def iter_flows(top_flow: EarlyBatch) -> AsyncIterator[Tuple[FullID, EarlyBatch]]:
-    to_check: List[Tuple[FullID, EarlyBatch]] = [((), top_flow)]
+async def iter_flows(top_flow: EarlyBatch) -> AsyncIterator[tuple[FullID, EarlyBatch]]:
+    to_check: list[tuple[FullID, EarlyBatch]] = [((), top_flow)]
     while to_check:
         prefix, flow = to_check.pop(0)
         yield prefix, flow
@@ -118,7 +104,7 @@ async def check_local_deps(top_flow: EarlyBatch) -> None:
     # with Trie (prefix tree) to reduce time complexity to O(kn^2)
     # (for each task (n) for each task's dependency (n) do Trie check (k))
 
-    runs_on_remote: Set[FullID] = set()
+    runs_on_remote: set[FullID] = set()
 
     async for prefix, flow in iter_flows(top_flow):
         runs_on_remote.update(
@@ -164,7 +150,7 @@ async def check_local_deps(top_flow: EarlyBatch) -> None:
 
 
 async def check_expressions(top_flow: RunningBatchFlow) -> None:
-    errors: List[EvalError] = []
+    errors: list[EvalError] = []
     async for _, flow in iter_flows(top_flow):
         errors += flow.validate_expressions()
     if errors:
@@ -174,8 +160,8 @@ async def check_expressions(top_flow: RunningBatchFlow) -> None:
 class ImageRefNotUniqueError(Exception):
     @dataclasses.dataclass
     class ImageInfo:
-        context: Optional[Union[URL, LocalPath]]
-        dockerfile: Optional[Union[URL, LocalPath]]
+        context: URL | LocalPath | None
+        dockerfile: URL | LocalPath | None
         ast: ast.Image
 
     def __init__(self, ref: str, images: Sequence[ImageInfo]) -> None:
@@ -196,7 +182,7 @@ class ImageRefNotUniqueError(Exception):
 
 
 async def check_image_refs_unique(top_flow: RunningBatchFlow) -> None:
-    _tmp: Dict[str, List[ImageRefNotUniqueError.ImageInfo]] = defaultdict(list)
+    _tmp: dict[str, list[ImageRefNotUniqueError.ImageInfo]] = defaultdict(list)
 
     async for _, flow in iter_flows(top_flow):
         for image in flow.early_images.values():
@@ -243,14 +229,14 @@ async def upload_image_data(
     top_flow: RunningBatchFlow,
     apolo_runner: CommandRunner,
     storage: BakeStorage,
-) -> List[BakeImage]:
+) -> list[BakeImage]:
     @dataclasses.dataclass
     class _TmpData:
-        context_on_storage: Optional[URL]
-        dockerfile_rel: Optional[str]
-        yaml_defs: List[FullID]
+        context_on_storage: URL | None
+        dockerfile_rel: str | None
+        yaml_defs: list[FullID]
 
-    _tmp: Dict[str, _TmpData] = {}
+    _tmp: dict[str, _TmpData] = {}
 
     async for prefix, flow in iter_flows(top_flow):
         for image in flow.early_images.values():
@@ -258,7 +244,7 @@ async def upload_image_data(
                 # Reusing image ref between bakes introduces
                 # race condition anyway, so we can safely use it
                 # as remote context dir name
-                storage_context_dir: Optional[URL] = image.get_ctx_storage_dir(
+                storage_context_dir: URL | None = image.get_ctx_storage_dir(
                     top_flow.project_name, top_flow.project_id
                 )
             else:
@@ -312,15 +298,15 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         client: Client,
         storage: Storage,
         global_options: GlobalOptions,
-        run_apolo_cli: Optional[CommandRunner] = None,
+        run_apolo_cli: CommandRunner | None = None,
     ) -> None:
         self._config_dir = config_dir
         self._console = console
         self._client = client
         self._storage = storage
-        self._project_storage: Optional[ProjectStorage] = None
-        self._config_loader: Optional[BatchLocalCL] = None
-        self._project: Optional[ProjectCtx] = None
+        self._project_storage: ProjectStorage | None = None
+        self._config_loader: BatchLocalCL | None = None
+        self._project: ProjectCtx | None = None
         self._run_apolo_cli = run_apolo_cli or make_cmd_exec(
             "apolo", global_options=encode_global_options(global_options)
         )
@@ -332,7 +318,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         return self._project.id
 
     @property
-    def project_role(self) -> Optional[str]:
+    def project_role(self) -> str | None:
         assert self._project is not None
         return self._project.role
 
@@ -373,9 +359,9 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
 
     async def __aexit__(
         self,
-        exc_typ: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_typ: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -383,10 +369,10 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
     async def _setup_bake(
         self,
         batch_name: str,
-        params: Optional[Mapping[str, str]] = None,
-        name: Optional[str] = None,
+        params: Mapping[str, str] | None = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
-    ) -> Tuple[Bake, RunningBatchFlow]:
+    ) -> tuple[Bake, RunningBatchFlow]:
         # batch_name is a name of yaml config inside self._workspace / .apolo
         # folder without the file extension
         self._console.log(f"[bright_black]apolo_sdk=={sdk_version}")
@@ -458,8 +444,8 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         self,
         batch_name: str,
         local_executor: bool = False,
-        params: Optional[Mapping[str, str]] = None,
-        name: Optional[str] = None,
+        params: Mapping[str, str] | None = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
     ) -> None:
         self._console.print(
@@ -540,8 +526,8 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
     async def list_bakes(
         self,
         tags: AbstractSet[str] = frozenset(),
-        since: Optional[datetime.datetime] = None,
-        until: Optional[datetime.datetime] = None,
+        since: datetime.datetime | None = None,
+        until: datetime.datetime | None = None,
         recent_first: bool = False,
     ) -> None:
         def _setup_table() -> Table:
@@ -592,7 +578,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         bake_id: str,
         *,
         attempt_no: int = -1,
-        output: Optional[LocalPath] = None,
+        output: LocalPath | None = None,
         save_dot: bool = False,
         save_pdf: bool = False,
         view_pdf: bool = False,
@@ -607,7 +593,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
                 f"flow [b]{self.project_id}[/b] are correct."
             )
             exit(1)
-            assert False, "unreachable"
+            raise AssertionError("unreachable")
 
         attempt_storage = bake_storage.attempt(number=attempt_no)
         attempt = await attempt_storage.get()
@@ -682,12 +668,12 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         dot: Digraph,
         graphs: Mapping[FullID, Mapping[FullID, AbstractSet[FullID]]],
         prefix: FullID,
-        anchors: Dict[str, str],
-        statuses: Dict[FullID, TaskStatus],
+        anchors: dict[str, str],
+        statuses: dict[FullID, TaskStatus],
     ) -> None:
-        lhead: Optional[str]
-        ltail: Optional[str]
-        color: Optional[str]
+        lhead: str | None
+        ltail: str | None
+        color: str | None
         first = True
         graph = graphs[prefix]
         for task_id, deps in graph.items():
@@ -776,9 +762,9 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         )
 
     async def clear_cache(
-        self, batch: Optional[str] = None, task_id: Optional[str] = None
+        self, batch: str | None = None, task_id: str | None = None
     ) -> None:
-        full_id: Optional[FullID] = None
+        full_id: FullID | None = None
         if task_id:
             full_id = tuple(task_id.split("."))
         await self.storage.delete_cache_entries(batch, full_id)
@@ -802,7 +788,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         *,
         attempt_no: int = -1,
         from_failed: bool = True,
-    ) -> Tuple[Bake, RunningBatchFlow]:
+    ) -> tuple[Bake, RunningBatchFlow]:
         bake_storage = self.storage.bake(id=bake_id)
         bake = await bake_storage.get()
         if bake.last_attempt and attempt_no == -1:

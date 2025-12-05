@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import asyncio
 import click
 from pathlib import Path
-from typing import List, Optional
 
 from apolo_flow.cli.utils import wrap_async
 
@@ -13,7 +12,7 @@ from .root import Root
 @dataclass
 class Spec:
     template: str
-    checkout: Optional[str] = None
+    checkout: str | None = None
 
 
 SPECS = {
@@ -22,7 +21,7 @@ SPECS = {
 }
 
 
-def gen_cmd(spec: Spec, outdir: Path) -> List[str]:
+def gen_cmd(spec: Spec, outdir: Path) -> list[str]:
     cmd = ["cookiecutter"]
     cmd.append(spec.template)
     if spec.checkout:
@@ -33,7 +32,7 @@ def gen_cmd(spec: Spec, outdir: Path) -> List[str]:
     return cmd
 
 
-async def gen_project(root: Root, cmd: List[str]) -> None:
+async def gen_project(root: Root, cmd: list[str]) -> None:
     root.console.print(f"[b]{cmd}[/b]")
     proc = await asyncio.create_subprocess_exec(*cmd)
     try:

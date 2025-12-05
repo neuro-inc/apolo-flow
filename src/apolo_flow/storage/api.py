@@ -5,25 +5,9 @@ import aiohttp
 import datetime
 import json
 from apolo_sdk import Client, Project as ApoloProject
+from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
 from contextlib import asynccontextmanager
-from typing import (
-    AbstractSet,
-    Any,
-    AsyncIterator,
-    Callable,
-    Dict,
-    Generic,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    overload,
-)
+from typing import AbstractSet, Any, Generic, TypeVar, overload
 from typing_extensions import TypedDict
 from yarl import URL
 
@@ -143,11 +127,11 @@ def _parse_bake_payload(data: Mapping[str, Any]) -> Bake:
             _id_from_json(full_id): {_id_from_json(dep) for dep in deps}
             for full_id, deps in gr.items()
         }
-    last_attempt: Optional[Attempt] = data.get("last_attempt")
+    last_attempt: Attempt | None = data.get("last_attempt")
     if last_attempt:
         last_attempt = _parse_attempt_payload(data["last_attempt"])
 
-    git_info: Optional[GitInfo] = None
+    git_info: GitInfo | None = None
     if data["meta"].get("git_info"):
         git_info = GitInfo(
             sha=data["meta"]["git_info"]["sha"],
@@ -188,7 +172,7 @@ def _parse_attempt_payload(data: Mapping[str, Any]) -> Attempt:
 
 def _parse_bake_image_payload(data: Mapping[str, Any]) -> BakeImage:
     context_on_storage_raw = data.get("context_on_storage", None)
-    context_on_storage: Optional[URL] = None
+    context_on_storage: URL | None = None
     if context_on_storage_raw is not None:
         context_on_storage = URL(context_on_storage_raw)
     return BakeImage(
@@ -214,9 +198,9 @@ class RawApiClient:
         self,
         method: str,
         url_suffix: str,
-        data: Optional[Mapping[str, Any]] = None,
-        headers: Optional[Mapping[str, str]] = None,
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        data: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> AsyncIterator[aiohttp.ClientResponse]:
         url = self._base_url / url_suffix
         auth = await self._config._api_auth()
@@ -236,7 +220,7 @@ class RawApiClient:
         self,
         url_suffix: str,
         mapper: Callable[[Mapping[str, Any]], E],
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> AsyncIterator[E]:
         headers = {"Accept": "application/x-ndjson"}
         async with self._request(
@@ -276,7 +260,7 @@ class RawApiClient:
         self,
         url_suffix: str,
         mapper: Callable[[Mapping[str, Any]], E],
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> E:
         async with self._request("GET", url_suffix, params=params) as resp:
             return mapper(await resp.json())
@@ -284,7 +268,7 @@ class RawApiClient:
     async def delete(
         self,
         url_suffix: str,
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> None:
         async with self._request("DELETE", url_suffix, params=params):
             pass
@@ -302,7 +286,7 @@ class RetryingReadRawApiClient(RetryConfig, RawApiClient):
         self,
         url_suffix: str,
         mapper: Callable[[Mapping[str, Any]], E],
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> E:
         return await super().get(url_suffix, mapper, params)
 
@@ -311,8 +295,8 @@ class RetryingReadRawApiClient(RetryConfig, RawApiClient):
         self,
         url_suffix: str,
         mapper: Callable[[Mapping[str, Any]], E],
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
-    ) -> List[E]:
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
+    ) -> list[E]:
         res = []
         async for item in super().list(url_suffix, mapper, params):
             res.append(item)
@@ -322,16 +306,14 @@ class RetryingReadRawApiClient(RetryConfig, RawApiClient):
         self,
         url_suffix: str,
         mapper: Callable[[Mapping[str, Any]], E],
-        params: Union[Sequence[Tuple[str, str]], Mapping[str, str], None] = None,
+        params: Sequence[tuple[str, str]] | Mapping[str, str] | None = None,
     ) -> AsyncIterator[E]:
         for item in await self._list(url_suffix, mapper, params):
             yield item
 
 
 class ApiStorage(Storage):
-    def __init__(
-        self, client: Client, _raw_client: Optional[RawApiClient] = None
-    ) -> None:
+    def __init__(self, client: Client, _raw_client: RawApiClient | None = None) -> None:
         self._client = client
         self._cluster_name = client.config.cluster_name
         self._org_name = client.config.org_name
@@ -364,12 +346,12 @@ class ApiStorage(Storage):
     def project(
         self,
         *,
-        id: Optional[str] = None,
-        project_name: Optional[str] = None,
-        owner: Optional[str] = None,
-        yaml_id: Optional[str] = None,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
+        id: str | None = None,
+        project_name: str | None = None,
+        owner: str | None = None,
+        yaml_id: str | None = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
     ) -> "ProjectStorage":
         cluster = cluster or self._cluster_name
         org_name = org_name or self._org_name
@@ -382,21 +364,21 @@ class ApiStorage(Storage):
             assert yaml_id
             return ApiProjectStorage(
                 self._raw_client,
-                args=dict(
-                    yaml_id=yaml_id,
-                    cluster=cluster,
-                    org_name=org_name,
-                    owner=owner,
-                    project_name=project_name,
-                ),
+                args={
+                    "yaml_id": yaml_id,
+                    "cluster": cluster,
+                    "org_name": org_name,
+                    "owner": owner,
+                    "project_name": project_name,
+                },
             )
 
     async def create_project(
         self,
         yaml_id: str,
         project_name: str,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
     ) -> Project:
         return await self._raw_client.create(
             "flow/projects",
@@ -411,10 +393,10 @@ class ApiStorage(Storage):
 
     def list_projects(
         self,
-        name: Optional[str] = None,
-        cluster: Optional[str] = None,
-        project_name: Optional[str] = None,
-        org_name: Optional[str] = None,
+        name: str | None = None,
+        cluster: str | None = None,
+        project_name: str | None = None,
+        org_name: str | None = None,
     ) -> AsyncIterator[Project]:
         params = []
         if name is not None:
@@ -436,14 +418,14 @@ ARGS = TypeVar("ARGS")
 
 
 class DeferredIdMixin(Generic[E, ARGS], abc.ABC):
-    _id: Optional[str]
-    _args: Optional[ARGS]
+    _id: str | None
+    _args: ARGS | None
 
     @abc.abstractmethod
-    async def _retrieve_id(self, args: ARGS) -> Tuple[str, E]:
+    async def _retrieve_id(self, args: ARGS) -> tuple[str, E]:
         pass
 
-    async def get_id(self) -> Tuple[str, Optional[E]]:
+    async def get_id(self) -> tuple[str, E | None]:
         if self._id:
             return self._id, None
         assert self._args
@@ -455,7 +437,7 @@ class DeferredIdMixin(Generic[E, ARGS], abc.ABC):
 class ProjectInitArgs(TypedDict):
     yaml_id: str
     cluster: str
-    org_name: Optional[str]
+    org_name: str | None
     owner: str
     project_name: str
 
@@ -478,14 +460,14 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[ProjectInitArgs] = None,
+        id: str | None = None,
+        args: ProjectInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: ProjectInitArgs) -> Tuple[str, Project]:
+    async def _retrieve_id(self, args: ProjectInitArgs) -> tuple[str, Project]:
         params = {
             "name": args["yaml_id"],
             "cluster": args["cluster"],
@@ -514,9 +496,9 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
 
     async def list_bakes(
         self,
-        tags: Optional[AbstractSet[str]] = None,
-        since: Optional[datetime.datetime] = None,
-        until: Optional[datetime.datetime] = None,
+        tags: AbstractSet[str] | None = None,
+        since: datetime.datetime | None = None,
+        until: datetime.datetime | None = None,
         recent_first: bool = False,
     ) -> AsyncIterator[Bake]:
         project_id, _ = await self.get_id()
@@ -541,8 +523,8 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
         batch: str,
         meta: BakeMeta,
         graphs: Mapping[FullID, Mapping[FullID, AbstractSet[FullID]]],
-        params: Optional[Mapping[str, str]] = None,
-        name: Optional[str] = None,
+        params: Mapping[str, str] | None = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
     ) -> Bake:
         project_id, _ = await self.get_id()
@@ -601,8 +583,8 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
 
     async def delete_cache_entries(
         self,
-        batch: Optional[str] = None,
-        task_id: Optional[FullID] = None,
+        batch: str | None = None,
+        task_id: FullID | None = None,
     ) -> None:
         project_id, _ = await self.get_id()
         params = [("project_id", project_id)]
@@ -627,7 +609,7 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         project_id, _ = await self.get_id()
         payload = {
@@ -646,7 +628,7 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         project_id, _ = await self.get_id()
         payload = {
@@ -662,34 +644,32 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
         )
 
     def live_job(
-        self, *, id: Optional[str] = None, yaml_id: Optional[str] = None
+        self, *, id: str | None = None, yaml_id: str | None = None
     ) -> "LiveJobStorage":
         if id:
             return ApiLiveJobStorage(self._raw_client, id=id)
         else:
             assert yaml_id
             return ApiLiveJobStorage(
-                self._raw_client, args=dict(yaml_id=yaml_id, project_storage=self)
+                self._raw_client, args={"yaml_id": yaml_id, "project_storage": self}
             )
 
-    def bake(
-        self, *, id: Optional[str] = None, name: Optional[str] = None
-    ) -> "BakeStorage":
+    def bake(self, *, id: str | None = None, name: str | None = None) -> "BakeStorage":
         if id:
             return ApiBakeStorage(self._raw_client, id=id)
         else:
             assert name
             return ApiBakeStorage(
-                self._raw_client, args=dict(name=name, project_storage=self)
+                self._raw_client, args={"name": name, "project_storage": self}
             )
 
     def cache_entry(
         self,
         *,
-        id: Optional[str] = None,
-        task_id: Optional[FullID] = None,
-        batch: Optional[str] = None,
-        key: Optional[str] = None,
+        id: str | None = None,
+        task_id: FullID | None = None,
+        batch: str | None = None,
+        key: str | None = None,
     ) -> "CacheEntryStorage":
         if id:
             return ApiCacheEntryStorage(self._raw_client, id=id)
@@ -699,7 +679,12 @@ class ApiProjectStorage(DeferredIdMixin[Project, ProjectInitArgs], ProjectStorag
             assert key
             return ApiCacheEntryStorage(
                 self._raw_client,
-                args=dict(task_id=task_id, batch=batch, key=key, project_storage=self),
+                args={
+                    "task_id": task_id,
+                    "batch": batch,
+                    "key": key,
+                    "project_storage": self,
+                },
             )
 
 
@@ -726,14 +711,14 @@ class ApiBakeStorage(DeferredIdMixin[Bake, BakeInitArgs], BakeStorage):
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[BakeInitArgs] = None,
+        id: str | None = None,
+        args: BakeInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: BakeInitArgs) -> Tuple[str, Bake]:
+    async def _retrieve_id(self, args: BakeInitArgs) -> tuple[str, Bake]:
         project_id, _ = await args["project_storage"].get_id()
         bake = await self._raw_client.get(
             "flow/bakes/by_name",
@@ -767,8 +752,8 @@ class ApiBakeStorage(DeferredIdMixin[Bake, BakeInitArgs], BakeStorage):
     async def create_attempt(
         self,
         configs_meta: ConfigsMeta,
-        number: Optional[int] = None,
-        executor_id: Optional[str] = None,
+        number: int | None = None,
+        executor_id: str | None = None,
         result: TaskStatus = TaskStatus.PENDING,
     ) -> Attempt:
         bake_id, _ = await self.get_id()
@@ -812,9 +797,9 @@ class ApiBakeStorage(DeferredIdMixin[Bake, BakeInitArgs], BakeStorage):
         yaml_defs: Sequence[FullID],
         ref: str,
         status: ImageStatus = ImageStatus.PENDING,
-        context_on_storage: Optional[URL] = None,
-        dockerfile_rel: Optional[str] = None,
-        builder_job_id: Optional[str] = None,
+        context_on_storage: URL | None = None,
+        dockerfile_rel: str | None = None,
+        builder_job_id: str | None = None,
     ) -> BakeImage:
         bake_id, _ = await self.get_id()
         payload = {
@@ -833,21 +818,21 @@ class ApiBakeStorage(DeferredIdMixin[Bake, BakeInitArgs], BakeStorage):
         )
 
     def attempt(
-        self, *, id: Optional[str] = None, number: Optional[int] = None
+        self, *, id: str | None = None, number: int | None = None
     ) -> "AttemptStorage":
         if id:
             return ApiAttemptStorage(self._raw_client, id=id)
         else:
             assert number
             return ApiAttemptStorage(
-                self._raw_client, args=dict(bake_storage=self, number=number)
+                self._raw_client, args={"bake_storage": self, "number": number}
             )
 
     def config_file(self, *, id: str) -> "ConfigFileStorage":
         return ApiConfigFileStorage(self._raw_client, id=id)
 
     def bake_image(
-        self, *, id: Optional[str] = None, ref: Optional[str] = None
+        self, *, id: str | None = None, ref: str | None = None
     ) -> "BakeImageStorage":
         if id:
             return ApiBakeImageStorage(self._raw_client, id=id)
@@ -855,10 +840,10 @@ class ApiBakeStorage(DeferredIdMixin[Bake, BakeInitArgs], BakeStorage):
 
         return ApiBakeImageStorage(
             self._raw_client,
-            args=dict(
-                bake_storage=self,
-                ref=ref,
-            ),
+            args={
+                "bake_storage": self,
+                "ref": ref,
+            },
         )
 
 
@@ -889,14 +874,14 @@ class ApiCacheEntryStorage(
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[CacheEntryInitArgs] = None,
+        id: str | None = None,
+        args: CacheEntryInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: CacheEntryInitArgs) -> Tuple[str, CacheEntry]:
+    async def _retrieve_id(self, args: CacheEntryInitArgs) -> tuple[str, CacheEntry]:
         project_id, _ = await args["project_storage"].get_id()
         cache_entry = await self._raw_client.get(
             "flow/cache_entries/by_key",
@@ -942,14 +927,14 @@ class ApiLiveJobStorage(DeferredIdMixin[LiveJob, LiveJobsInitArgs], LiveJobStora
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[LiveJobsInitArgs] = None,
+        id: str | None = None,
+        args: LiveJobsInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: LiveJobsInitArgs) -> Tuple[str, LiveJob]:
+    async def _retrieve_id(self, args: LiveJobsInitArgs) -> tuple[str, LiveJob]:
         project_id, _ = await args["project_storage"].get_id()
         live_job = await self._raw_client.get(
             "flow/live_jobs/by_yaml_id",
@@ -993,14 +978,14 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[AttemptInitArgs] = None,
+        id: str | None = None,
+        args: AttemptInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: AttemptInitArgs) -> Tuple[str, Attempt]:
+    async def _retrieve_id(self, args: AttemptInitArgs) -> tuple[str, Attempt]:
         bake_id, _ = await args["bake_storage"].get_id()
         attempt = await self._raw_client.get(
             "flow/attempts/by_number",
@@ -1023,8 +1008,8 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
     async def update(
         self,
         *,
-        executor_id: Union[Optional[str], Type[_Unset]] = _Unset,
-        result: Union[TaskStatus, Type[_Unset]] = _Unset,
+        executor_id: str | type[_Unset] | None = _Unset,
+        result: TaskStatus | type[_Unset] = _Unset,
     ) -> Attempt:
         # TODO: Use PATCH when implemented on server
         attempt = await self.get()
@@ -1061,10 +1046,10 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
     async def create_task(
         self,
         yaml_id: FullID,
-        raw_id: Optional[str],
-        status: Union[TaskStatusItem, TaskStatus],
-        outputs: Optional[Mapping[str, str]] = None,
-        state: Optional[Mapping[str, str]] = None,
+        raw_id: str | None,
+        status: TaskStatusItem | TaskStatus,
+        outputs: Mapping[str, str] | None = None,
+        state: Mapping[str, str] | None = None,
     ) -> Task:
         if isinstance(status, TaskStatus):
             status = TaskStatusItem(when=_now(), status=status)
@@ -1087,7 +1072,7 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
         )
 
     def task(
-        self, *, id: Optional[str] = None, yaml_id: Optional[FullID] = None
+        self, *, id: str | None = None, yaml_id: FullID | None = None
     ) -> "TaskStorage":
         if id:
             return ApiTaskStorage(self._raw_client, id=id)
@@ -1096,10 +1081,10 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
 
             return ApiTaskStorage(
                 self._raw_client,
-                args=dict(
-                    yaml_id=yaml_id,
-                    attempt_storage=self,
-                ),
+                args={
+                    "yaml_id": yaml_id,
+                    "attempt_storage": self,
+                },
             )
 
 
@@ -1143,14 +1128,14 @@ class ApiBakeImageStorage(
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[BakeImageInitArgs] = None,
+        id: str | None = None,
+        args: BakeImageInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: BakeImageInitArgs) -> Tuple[str, BakeImage]:
+    async def _retrieve_id(self, args: BakeImageInitArgs) -> tuple[str, BakeImage]:
         bake_id, _ = await args["bake_storage"].get_id()
         bake_image = await self._raw_client.get(
             "flow/bake_images/by_ref",
@@ -1173,12 +1158,12 @@ class ApiBakeImageStorage(
     async def update(
         self,
         *,
-        status: Union[ImageStatus, Type[_Unset]] = _Unset,
-        builder_job_id: Union[Optional[str], Type[_Unset]] = _Unset,
+        status: ImageStatus | type[_Unset] = _Unset,
+        builder_job_id: str | type[_Unset] | None = _Unset,
     ) -> BakeImage:
         bake_image_id, _ = await self.get_id()
 
-        patch_data: Dict[str, Any] = {}
+        patch_data: dict[str, Any] = {}
         if status != _Unset:
             patch_data["status"] = status
         if builder_job_id != _Unset:
@@ -1211,14 +1196,14 @@ class ApiTaskStorage(DeferredIdMixin[Task, TaskInitArgs], TaskStorage):
         self,
         raw_client: RawApiClient,
         *,
-        id: Optional[str] = None,
-        args: Optional[TaskInitArgs] = None,
+        id: str | None = None,
+        args: TaskInitArgs | None = None,
     ):
         self._raw_client = raw_client
         self._id = id
         self._args = args
 
-    async def _retrieve_id(self, args: TaskInitArgs) -> Tuple[str, Task]:
+    async def _retrieve_id(self, args: TaskInitArgs) -> tuple[str, Task]:
         attempt_id, _ = await args["attempt_storage"].get_id()
         task = await self._raw_client.get(
             "flow/tasks/by_yaml_id",
@@ -1239,9 +1224,9 @@ class ApiTaskStorage(DeferredIdMixin[Task, TaskInitArgs], TaskStorage):
     async def update(
         self,
         *,
-        outputs: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        state: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        new_status: Optional[Union[TaskStatusItem, TaskStatus]] = None,
+        outputs: Mapping[str, str] | type[_Unset] | None = _Unset,
+        state: Mapping[str, str] | type[_Unset] | None = _Unset,
+        new_status: TaskStatusItem | TaskStatus | None = None,
     ) -> Task:
         # TODO: Use PATCH when implemented on server
         task = await self.get()

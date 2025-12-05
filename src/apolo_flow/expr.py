@@ -17,7 +17,16 @@ import shlex
 from abc import ABC
 from apolo_sdk import Client, JobDescription, JobRestartPolicy, JobStatus
 from ast import literal_eval
-from collections.abc import Sized
+from collections.abc import (
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    Sequence,
+    Sized,
+)
 from contextlib import asynccontextmanager
 from funcparserlib.parser import (
     Parser,
@@ -32,24 +41,14 @@ from funcparserlib.parser import (
 from typing import (
     Any,
     AsyncContextManager,
-    AsyncIterator,
-    Awaitable,
-    Callable,
     ClassVar,
-    Dict,
+    Final,
     Generic,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
     TypeVar,
     Union,
     cast,
 )
-from typing_extensions import Final, Protocol, runtime_checkable
+from typing_extensions import Protocol, runtime_checkable
 from yarl import URL
 
 from .tokenizer import Pos, Token, tokenize
@@ -57,7 +56,7 @@ from .types import AlwaysT, LocalPath, RemotePath, TaskStatus
 from .utils import run_subproc
 
 
-LiteralT = Union[None, bool, int, float, str]
+LiteralT = Union[bool, int, float, str, None]
 
 TypeT = Union[
     LiteralT,
@@ -171,7 +170,7 @@ class CallCtx:
     root: RootABC
 
 
-def _build_signatures(**kwargs: Callable[..., Awaitable[TypeT]]) -> Dict[str, FuncDef]:
+def _build_signatures(**kwargs: Callable[..., Awaitable[TypeT]]) -> dict[str, FuncDef]:
     return {k: FuncDef(k, inspect.signature(v), v) for k, v in kwargs.items()}
 
 
@@ -210,7 +209,7 @@ async def values(ctx: CallCtx, arg: TypeT) -> TypeT:
 
 
 async def arange(
-    ctx: CallCtx, arg: TypeT, arg2: Optional[TypeT] = None, arg3: Optional[TypeT] = None
+    ctx: CallCtx, arg: TypeT, arg2: TypeT | None = None, arg3: TypeT | None = None
 ) -> SequenceT:
     if not isinstance(arg, int):
         raise TypeError(f"range() first argument should be an int, got {arg!r}")
@@ -401,10 +400,10 @@ def _check_has_needs(ctx: CallCtx, *, func_name: str) -> None:
         raise ValueError(f"{func_name}() is only available inside a task definition")
 
 
-def _get_needs_statuses(root: RootABC) -> Dict[str, TaskStatus]:
+def _get_needs_statuses(root: RootABC) -> dict[str, TaskStatus]:
     needs = root.lookup("needs")
     assert isinstance(needs, MappingT)
-    result: Dict[str, TaskStatus] = {}
+    result: dict[str, TaskStatus] = {}
     for dependency in needs:
         dep_ctx = needs[dependency]
         result[dependency] = dep_ctx.result  # type: ignore
@@ -459,7 +458,7 @@ async def failure(ctx: CallCtx, *args: str) -> bool:
 
 
 async def inspect_job(
-    ctx: CallCtx, job_name: TypeT, suffix: Optional[TypeT] = None
+    ctx: CallCtx, job_name: TypeT, suffix: TypeT | None = None
 ) -> ContainerT:
     from .context import LiveContext, _id2tag
 
@@ -477,7 +476,7 @@ async def inspect_job(
     tags = ctx.root.tags | {f"job:{_id2tag(job_name)}"}
     if suffix is not None:
         tags |= {f"multi:{suffix}"}
-    found_job: Optional[JobDescription] = None
+    found_job: JobDescription | None = None
     async with ctx.root.client() as client:
         async for job in client.jobs.list(
             tags=tags,
@@ -630,13 +629,13 @@ class Lookup(Item):
                 yield getter.key
 
 
-def make_lookup(arg: Tuple[Token, List[Getter]]) -> Lookup:
+def make_lookup(arg: tuple[Token, list[Getter]]) -> Lookup:
     name, trailer = arg
     end = trailer[-1].end if trailer else name.end
     return Lookup(name.start, end, name.value, trailer)
 
 
-def make_args(arg: Optional[Tuple[Item, List[Item]]]) -> List[Item]:
+def make_args(arg: tuple[Item, list[Item]] | None) -> list[Item]:
     if arg is None:
         return []
     first, tail = arg
@@ -672,7 +671,7 @@ class Call(Item):
                 yield getter.key
 
 
-def make_call(arg: Tuple[Token, List[Item], Sequence[Getter]]) -> Call:
+def make_call(arg: tuple[Token, list[Item], Sequence[Getter]]) -> Call:
     funcname, args, trailer = arg
     try:
         spec = FUNCTIONS[funcname.value]
@@ -739,17 +738,17 @@ def logical_or(arg1: Any, arg2: Any) -> Any:
     return arg1 or arg2
 
 
-BinOpTrailer = List[Tuple[Token, Item]]
+BinOpTrailer = list[tuple[Token, Item]]
 
 
-def make_op_trailer(args: Optional[Tuple[Token, Item, BinOpTrailer]]) -> BinOpTrailer:
+def make_op_trailer(args: tuple[Token, Item, BinOpTrailer] | None) -> BinOpTrailer:
     if args is None:
         return []
     op_token, item, trailer = args
     return [(op_token, item), *trailer]
 
 
-def make_bin_op_expr(args: Tuple[Item, BinOpTrailer]) -> Item:
+def make_bin_op_expr(args: tuple[Item, BinOpTrailer]) -> Item:
     op_map = {
         "==": operator.eq,
         "!=": operator.ne,
@@ -800,7 +799,7 @@ def _unary_minus(arg: Any) -> Any:
     return -arg
 
 
-def make_unary_op_expr(args: Tuple[Token, Item]) -> UnaryOp:
+def make_unary_op_expr(args: tuple[Token, Item]) -> UnaryOp:
     op_map = {
         "not": operator.not_,
         "+": _unary_plus,
@@ -826,12 +825,12 @@ class ListMaker(Item):
         return self.items
 
 
-def make_list(args: Tuple[Item, List[Item]]) -> ListMaker:
+def make_list(args: tuple[Item, list[Item]]) -> ListMaker:
     lst = [args[0]] + args[1]
     return ListMaker(lst[0].start, lst[-1].end, lst)
 
 
-def make_empty_list(args: Tuple[Token, Token]) -> ListMaker:
+def make_empty_list(args: tuple[Token, Token]) -> ListMaker:
     return ListMaker(args[0].start, args[1].end, [])
 
 
@@ -840,7 +839,7 @@ class ListCompMaker(Item):
     item_expr: Item
     var_name: str
     base_iter: Item
-    if_expr: Optional[Item] = None
+    if_expr: Item | None = None
 
     async def eval(self, root: RootABC) -> SequenceT:
         res = []
@@ -855,7 +854,7 @@ class ListCompMaker(Item):
         return [self.item_expr, self.base_iter]
 
 
-def make_list_comp(args: Tuple[Item, Token, Token, Token, Item]) -> ListCompMaker:
+def make_list_comp(args: tuple[Item, Token, Token, Token, Item]) -> ListCompMaker:
     item_expr, _, name, _, base_iter = args
     return ListCompMaker(
         item_expr.start,
@@ -867,7 +866,7 @@ def make_list_comp(args: Tuple[Item, Token, Token, Token, Item]) -> ListCompMake
 
 
 def make_list_comp_with_if(
-    args: Tuple[Item, Token, Token, Token, Item, Token, Item],
+    args: tuple[Item, Token, Token, Token, Item, Token, Item],
 ) -> ListCompMaker:
     item_expr, _, name, _, base_iter, _, if_expr = args
     return ListCompMaker(
@@ -882,7 +881,7 @@ def make_list_comp_with_if(
 
 @dataclasses.dataclass(frozen=True)
 class DictMaker(Item):
-    items: Sequence[Tuple[Item, Item]]
+    items: Sequence[tuple[Item, Item]]
 
     async def eval(self, root: RootABC) -> MappingT:
         ret = {}
@@ -899,7 +898,7 @@ class DictMaker(Item):
 
 
 def make_dict(
-    args: Union[Tuple[Item, Item, List[Tuple[Item, Item]]], Tuple[Item, Item]],
+    args: tuple[Item, Item, list[tuple[Item, Item]]] | tuple[Item, Item],
 ) -> DictMaker:
     lst = [(args[0], args[1])]
     if len(args) > 2:
@@ -907,7 +906,7 @@ def make_dict(
     return DictMaker(lst[0][0].start, lst[-1][1].end, lst)
 
 
-def make_empty_dict(args: Tuple[Token, Token]) -> DictMaker:
+def make_empty_dict(args: tuple[Token, Token]) -> DictMaker:
     return DictMaker(args[0].start, args[0].end, [])
 
 
@@ -927,7 +926,7 @@ class TernaryOp(Item):
         return [self.left, self.condition, self.right]
 
 
-def make_if_else(args: Tuple[Item, Token, Item, Token, Item]) -> TernaryOp:
+def make_if_else(args: tuple[Item, Token, Item, Token, Item]) -> TernaryOp:
     return TernaryOp(
         args[0].start,
         args[1].end,
@@ -1110,11 +1109,11 @@ PARSER: Final = oneplus(TMPL | TEXT) + skip(finished)
 
 class BaseExpr(Generic[_T], abc.ABC):
     @abc.abstractmethod
-    async def eval(self, root: RootABC) -> Optional[_T]:
+    async def eval(self, root: RootABC) -> _T | None:
         pass
 
 
-IMPLICIT_STR_CONCAT: Final[Tuple[type, ...]] = (str, RemotePath, LocalPath, URL)
+IMPLICIT_STR_CONCAT: Final[tuple[type, ...]] = (str, RemotePath, LocalPath, URL)
 
 
 class Expr(BaseExpr[_T]):
@@ -1124,9 +1123,9 @@ class Expr(BaseExpr[_T]):
     type_name: ClassVar[str]
     start: Pos
     end: Pos
-    _ret: Union[None, _T]
-    _pattern: Union[None, str, _T]
-    _parsed: Optional[Sequence[Item]]
+    _ret: _T | None
+    _pattern: str | _T | None
+    _parsed: Sequence[Item] | None
 
     @abc.abstractmethod
     def convert(self, arg: TypeT) -> _T:
@@ -1138,7 +1137,7 @@ class Expr(BaseExpr[_T]):
         except (TypeError, ValueError) as exc:
             raise EvalError(str(exc), start, end)
 
-    def __init__(self, start: Pos, end: Pos, pattern: Union[None, str, _T]) -> None:
+    def __init__(self, start: Pos, end: Pos, pattern: str | _T | None) -> None:
         self.start = start
         self.end = end
         self._pattern = pattern
@@ -1185,22 +1184,22 @@ class Expr(BaseExpr[_T]):
             raise EvalError("None is not allowed", start, end)
 
     @property
-    def pattern(self) -> Optional[str]:
+    def pattern(self) -> str | None:
         if self._pattern is None:
             return None
         return str(self._pattern)
 
     @property
-    def value(self) -> Optional[_T]:
+    def value(self) -> _T | None:
         if self._ret is None:
             return None
         return self._ret
 
-    async def eval(self, root: RootABC) -> Optional[_T]:
+    async def eval(self, root: RootABC) -> _T | None:
         if self._ret is not None:
             return self._ret
         if self._parsed is not None:
-            ret: List[TypeT] = []
+            ret: list[TypeT] = []
             for part in self._parsed:
                 try:
                     val = await part.eval(root)
@@ -1269,7 +1268,7 @@ class NoExprMixin:
 class PrimitiveExprMixin:
     type_name: ClassVar[str] = "primitive"
 
-    def convert(self, arg: TypeT) -> Union[int, bool, float, str]:
+    def convert(self, arg: TypeT) -> int | bool | float | str:
         if isinstance(arg, (int, bool, float)):
             return arg
         return str(arg)
@@ -1400,7 +1399,7 @@ async def project_image_ref(img_ref: str, root: RootABC) -> str:
 
 
 class OptImageRefStrExpr(OptStrExpr):
-    async def eval(self, root: RootABC) -> Optional[str]:
+    async def eval(self, root: RootABC) -> str | None:
         img_ref = await super().eval(root)
         if img_ref is not None:
             return await project_image_ref(img_ref, root)
@@ -1443,7 +1442,7 @@ class SimpleOptBoolExpr(BoolExprMixin, NoExprMixin, Expr[bool]):
 class EnableExprMixin(NoConcatMixin):
     type_name: ClassVar[str] = "enabled_type"
 
-    def convert(self, arg: TypeT) -> Union[bool, AlwaysT]:
+    def convert(self, arg: TypeT) -> bool | AlwaysT:
         if isinstance(arg, AlwaysT):
             return arg
         if arg == "always()":
@@ -1579,7 +1578,7 @@ class ConcatSequenceExpr(BaseSequenceExpr):
         self._seqs = seqs
 
     async def eval(self, root: RootABC) -> SequenceT:
-        ret: List[TypeT] = []
+        ret: list[TypeT] = []
         for seq in self._seqs:
             value = await seq.eval(root)
             if value:
@@ -1594,7 +1593,7 @@ class SequenceExpr(BaseSequenceExpr, NoConcatMixin, Expr[SequenceT]):
         self,
         start: Pos,
         end: Pos,
-        pattern: Union[None, str, SequenceT],
+        pattern: str | SequenceT | None,
         item_factory: Callable[[TypeT], TypeT],
     ) -> None:
         super().__init__(start, end, pattern)
@@ -1603,7 +1602,7 @@ class SequenceExpr(BaseSequenceExpr, NoConcatMixin, Expr[SequenceT]):
     def convert(self, arg: TypeT) -> SequenceT:
         if not isinstance(arg, SequenceT):
             raise TypeError(f"{arg!r} is not a sequence")
-        ret: List[TypeT] = []
+        ret: list[TypeT] = []
         for item in arg:
             ret.append(self._item_factory(item))
         return cast(SequenceT, ret)
@@ -1657,7 +1656,7 @@ class MappingExpr(BaseMappingExpr, NoConcatMixin, StrictExpr[MappingT]):
         self,
         start: Pos,
         end: Pos,
-        pattern: Union[None, str, MappingT],
+        pattern: str | MappingT | None,
         value_factory: Callable[[TypeT], TypeT],
     ) -> None:
         super().__init__(start, end, pattern)

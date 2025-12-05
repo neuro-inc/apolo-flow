@@ -5,7 +5,7 @@ from apolo_cli.log_formatter import ConsoleHandler
 from click.exceptions import Abort as ClickAbort, Exit as ClickExit
 from datetime import datetime
 from rich.console import Console
-from typing import Any, List, Optional
+from typing import Any
 
 import apolo_flow
 from apolo_flow.cli import batch, completion, file_logging, flow, images, live, storage
@@ -50,7 +50,7 @@ class MainGroup(click.Group):
     def _process_args(
         self,
         ctx: click.Context,
-        config: Optional[str],
+        config: str | None,
         fake_workspace: bool,
         verbose: int,
         quiet: int,
@@ -68,7 +68,7 @@ class MainGroup(click.Group):
             highlight=False,
             log_path=False,
             log_time_format="[%X %z]",
-            get_datetime=lambda: datetime.now().astimezone(),
+            get_datetime=datetime.now().astimezone,
         )
 
         verbosity = verbose - quiet
@@ -87,9 +87,9 @@ class MainGroup(click.Group):
 
     def make_context(
         self,
-        info_name: Optional[str],
-        args: List[str],
-        parent: Optional[click.Context] = None,
+        info_name: str | None,
+        args: list[str],
+        parent: click.Context | None = None,
         **extra: Any,
     ) -> click.Context:
         ctx = super().make_context(info_name, args, parent, **extra)
@@ -151,7 +151,7 @@ class MainGroup(click.Group):
     version=apolo_flow.__version__, message="apolo-flow package version: %(version)s"
 )
 def cli(
-    config: Optional[str],
+    config: str | None,
     fake_workspace: bool,
     verbose: int,
     quiet: int,
@@ -194,7 +194,7 @@ cli.add_command(completion.completion)
 cli.add_command(flow.init)
 
 
-def main(args: Optional[List[str]] = None) -> None:
+def main(args: list[str] | None = None) -> None:
     try:
         cli.main(args=args, standalone_mode=False)
     except ClickAbort:

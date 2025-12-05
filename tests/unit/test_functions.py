@@ -4,9 +4,10 @@ import pytest
 import sys
 from _pytest.capture import CaptureFixture
 from apolo_sdk import Client
+from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from re_assert import Matches
-from typing import AbstractSet, Any, AsyncIterator, List, Mapping, Optional
+from typing import AbstractSet, Any
 from typing_extensions import Protocol
 from yarl import URL
 
@@ -91,7 +92,7 @@ async def test_int(client: Client) -> None:
         ("5,1,-1", [5, 4, 3, 2]),
     ],
 )
-async def test_range(client: Client, pattern: str, result: List[int]) -> None:
+async def test_range(client: Client, pattern: str, result: list[int]) -> None:
     expr = SequenceExpr(POS, POS, "${{ range(" + pattern + ") }}", int)  # type: ignore
     ret = await expr.eval(Root({}, client))
     assert ret == result  # type: ignore
@@ -198,7 +199,7 @@ class LiveContextFactory(Protocol):
         client: Client,
         tags: TagsCtx = frozenset(),
         dry_run: bool = False,
-        volumes: Optional[VolumesCtx] = None,
+        volumes: VolumesCtx | None = None,
     ) -> LiveContext: ...
 
 
@@ -208,7 +209,7 @@ async def live_context_factory(assets: pathlib.Path) -> LiveContextFactory:
         client: Client,
         tags: TagsCtx = frozenset(),
         dry_run: bool = False,
-        volumes: Optional[VolumesCtx] = None,
+        volumes: VolumesCtx | None = None,
     ) -> LiveContext:
         return LiveContext(
             _client=client,
