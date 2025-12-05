@@ -1,3 +1,6 @@
+import pytest
+import sys
+
 from apolo_flow.context import (
     BatchActionContext,
     BatchContext,
@@ -80,6 +83,11 @@ def test_expr_validation_invalid_input() -> None:
     assert errors[0].args[0] == "Input 'fff' is undefined"
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="'MultiCommand' is deprecated and will be removed "
+    "in Click 9.0. Use 'Group' instead.",
+)
 def test_expr_validation_bad_subcontext_lookup() -> None:
     expr = StrExpr(
         Pos(0, 0, LocalPath("<default>")),
