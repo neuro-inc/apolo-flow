@@ -2,8 +2,7 @@ import operator
 import pytest
 from funcparserlib.parser import NoParseError
 from textwrap import dedent
-from typing import Any
-from typing_extensions import Final
+from typing import Any, Final
 
 from apolo_flow.expr import (
     FUNCTIONS,

@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 
 import enum
+from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
-from typing import ClassVar, List, Sequence, Tuple
+from typing import ClassVar
 
 
 LocalPath = Path
 RemotePath = PurePosixPath
-FullID = Tuple[str, ...]
+FullID = tuple[str, ...]
 
 
 class AlwaysT:
@@ -56,15 +57,15 @@ class TaskStatus(str, enum.Enum):
         )
 
     @classmethod
-    def values(cls) -> List[str]:
+    def values(cls) -> list[str]:
         return [item.value for item in cls]
 
     @classmethod
-    def active_values(cls) -> List[str]:
+    def active_values(cls) -> list[str]:
         return [item.value for item in cls if not item.is_finished]
 
     @classmethod
-    def finished_values(cls) -> List[str]:
+    def finished_values(cls) -> list[str]:
         return [item.value for item in cls if item.is_finished]
 
 

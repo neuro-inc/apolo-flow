@@ -7,21 +7,12 @@ import secrets
 import shlex
 import sys
 from apolo_sdk import Client, JobDescription, JobStatus, ResourceNotFound
+from collections.abc import AsyncIterator, Iterable, Mapping
 from rich import box
 from rich.console import Console
 from rich.table import Table
 from types import TracebackType
-from typing import (
-    AbstractSet,
-    AsyncContextManager,
-    AsyncIterator,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Type,
-)
+from typing import AbstractSet, AsyncContextManager
 
 from .config_loader import LiveLocalCL
 from .context import ImageCtx, JobMeta, RunningLiveFlow, UnknownJob, VolumeCtx
@@ -43,9 +34,9 @@ from .utils import (
 class JobInfo:
     id: str
     status: JobStatus
-    raw_id: Optional[str]  # low-level job id, None for never runned jobs
+    raw_id: str | None  # low-level job id, None for never runned jobs
     tags: Iterable[str]
-    when: Optional[datetime.datetime]
+    when: datetime.datetime | None
 
 
 class LiveRunner(AsyncContextManager["LiveRunner"]):
@@ -60,11 +51,11 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
     ) -> None:
         self._config_dir = config_dir
         self._console = console
-        self._config_loader: Optional[LiveLocalCL] = None
-        self._flow: Optional[RunningLiveFlow] = None
+        self._config_loader: LiveLocalCL | None = None
+        self._flow: RunningLiveFlow | None = None
         self._client = client
         self._storage = storage
-        self._project_storage: Optional[ProjectStorage] = None
+        self._project_storage: ProjectStorage | None = None
         self._run_apolo_cli = make_cmd_exec(
             "apolo", global_options=encode_global_options(global_options)
         )
@@ -108,9 +99,9 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
 
     async def __aexit__(
         self,
-        exc_typ: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_typ: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -130,7 +121,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
         return self._client
 
     async def _ensure_meta(
-        self, job_id: str, suffix: Optional[str], *, skip_check: bool = False
+        self, job_id: str, suffix: str | None, *, skip_check: bool = False
     ) -> JobMeta:
         try:
             meta = await self.flow.get_meta(job_id)
@@ -154,7 +145,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
             sys.exit(1)
 
     async def _resolve_jobs(
-        self, meta: JobMeta, suffix: Optional[str]
+        self, meta: JobMeta, suffix: str | None
     ) -> AsyncIterator[JobDescription]:
         found = False
         since = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
@@ -220,7 +211,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
         if not found:
             raise ResourceNotFound
 
-    async def _job_status(self, job_id: str) -> List[JobInfo]:
+    async def _job_status(self, job_id: str) -> list[JobInfo]:
         meta = await self._ensure_meta(job_id, None, skip_check=True)
         ret = []
         found_suffixes = set()
@@ -232,7 +223,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
                     when = descr.history.started_at
                 else:
                     when = descr.history.finished_at
-                real_id: Optional[str] = None
+                real_id: str | None = None
                 for tag in descr.tags:
                     key, sep, val = tag.partition(":")
                     if sep and key == "multi":
@@ -291,7 +282,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
 
         self._console.print(table)
 
-    async def status(self, job_id: str, suffix: Optional[str]) -> None:
+    async def status(self, job_id: str, suffix: str | None) -> None:
         meta_ctx = await self._ensure_meta(job_id, suffix)
         try:
             async for descr in self._resolve_jobs(meta_ctx, suffix):
@@ -303,8 +294,8 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
     async def _try_attach_to_running(
         self,
         job_id: str,
-        suffix: Optional[str],
-        args: Optional[Tuple[str]],
+        suffix: str | None,
+        args: tuple[str] | None,
         params: Mapping[str, str],
     ) -> bool:
         is_multi = await self.flow.is_multi(job_id)
@@ -357,8 +348,8 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
     async def run(
         self,
         job_id: str,
-        suffix: Optional[str],
-        args: Optional[Tuple[str]],
+        suffix: str | None,
+        args: tuple[str] | None,
         params: Mapping[str, str],
     ) -> None:
         """Run a named job"""
@@ -468,7 +459,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
             )
         await self._run_apolo_cli(*run_args)
 
-    async def logs(self, job_id: str, suffix: Optional[str]) -> None:
+    async def logs(self, job_id: str, suffix: str | None) -> None:
         """Return job logs"""
         meta_ctx = await self._ensure_meta(job_id, suffix)
         try:
@@ -478,7 +469,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
             self._console.print(f"Job {fmt_id(job_id)} is not running")
             sys.exit(1)
 
-    async def kill_job(self, job_id: str, suffix: Optional[str]) -> bool:
+    async def kill_job(self, job_id: str, suffix: str | None) -> bool:
         """Kill named job"""
         meta_ctx = await self._ensure_meta(job_id, suffix)
 
@@ -495,7 +486,7 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
             pass
         return False
 
-    async def kill(self, job_id: str, suffix: Optional[str]) -> None:
+    async def kill(self, job_id: str, suffix: str | None) -> None:
         """Kill named job"""
         if await self.kill_job(job_id, suffix):
             self._console.print(f"Killed job [b]{job_id}[/b]")

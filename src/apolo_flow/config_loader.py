@@ -4,12 +4,13 @@ import abc
 import asyncio
 import logging
 from apolo_sdk import Client
+from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager, suppress
 from io import StringIO, TextIOWrapper
 from pathlib import PureWindowsPath
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
-from typing import Any, AsyncIterator, Dict, Optional, Sequence, TextIO, Union
+from typing import Any, TextIO
 
 from apolo_flow import ast
 from apolo_flow.parser import (
@@ -73,16 +74,16 @@ class ConfigLoader(abc.ABC):
 
 
 class StreamCL(ConfigLoader, abc.ABC):
-    __project_cache: Optional[ast.Project]
-    __action_cache: Dict[str, ast.BaseAction]
+    __project_cache: ast.Project | None
+    __action_cache: dict[str, ast.BaseAction]
 
     def __init__(self) -> None:
         self.__project_cache = None
-        self.__action_cache = dict()
+        self.__action_cache = {}
 
     @asynccontextmanager
     @abc.abstractmethod
-    async def project_stream(self) -> AsyncIterator[Optional[TextIO]]:
+    async def project_stream(self) -> AsyncIterator[TextIO | None]:
         yield None
 
     @asynccontextmanager
@@ -119,11 +120,11 @@ class StreamCL(ConfigLoader, abc.ABC):
 
 
 class LiveStreamCL(StreamCL, abc.ABC):
-    __flow_cache: Dict[str, ast.LiveFlow]
+    __flow_cache: dict[str, ast.LiveFlow]
 
     def __init__(self) -> None:
         super().__init__()
-        self.__flow_cache = dict()
+        self.__flow_cache = {}
 
     @asynccontextmanager
     @abc.abstractmethod
@@ -142,11 +143,11 @@ class LiveStreamCL(StreamCL, abc.ABC):
 
 
 class BatchStreamCL(StreamCL, abc.ABC):
-    __flow_cache: Dict[str, ast.BatchFlow]
+    __flow_cache: dict[str, ast.BatchFlow]
 
     def __init__(self) -> None:
         super().__init__()
-        self.__flow_cache = dict()
+        self.__flow_cache = {}
 
     @asynccontextmanager
     @abc.abstractmethod
@@ -177,7 +178,7 @@ class LocalCL(StreamCL, abc.ABC):
         super().__init__()
         self._workspace = config_dir.workspace.resolve()
         self._config_dir = config_dir.config_dir.resolve()
-        self._tempdir: Optional["TemporaryDirectory[str]"] = None
+        self._tempdir: TemporaryDirectory[str] | None = None
         self._client = client
 
     async def close(self) -> None:
@@ -200,7 +201,7 @@ class LocalCL(StreamCL, abc.ABC):
         return self._workspace
 
     @asynccontextmanager
-    async def project_stream(self) -> AsyncIterator[Optional[TextIO]]:
+    async def project_stream(self) -> AsyncIterator[TextIO | None]:
         for dir in (self._config_dir, self._workspace):
             for ext in (".yml", ".yaml"):
                 path = dir / "project"
@@ -309,7 +310,7 @@ class BatchLocalCL(
         self, name: str, bake_storage: BakeStorage
     ) -> ConfigsMeta:
         async with self.project_stream() as stream:
-            proj_conf_id: Optional[str]
+            proj_conf_id: str | None
             if stream is not None:
                 proj_conf_id = await self._upload_config(stream, bake_storage)
             else:
@@ -318,7 +319,7 @@ class BatchLocalCL(
             flow_conf_id = await self._upload_config(stream, bake_storage)
 
         flow_ast = await self.fetch_flow(name)
-        actions: Dict[str, str] = {}
+        actions: dict[str, str] = {}
         await self._collect_actions(flow_ast.tasks, actions, bake_storage)
         meta = ConfigsMeta(
             workspace=str(self.workspace),
@@ -337,8 +338,8 @@ class BatchLocalCL(
 
     async def _collect_actions(
         self,
-        tasks: Sequence[Union[ast.Task, ast.TaskActionCall, ast.TaskModuleCall]],
-        collect_to: Dict[str, str],
+        tasks: Sequence[ast.Task | ast.TaskActionCall | ast.TaskModuleCall],
+        collect_to: dict[str, str],
         bake_storage: BakeStorage,
     ) -> None:
         from apolo_flow.context import EMPTY_ROOT
@@ -403,7 +404,7 @@ class BatchRemoteCL(BatchStreamCL):
         yield await self._to_stream(self._meta.flow_config_id)
 
     @asynccontextmanager
-    async def project_stream(self) -> AsyncIterator[Optional[TextIO]]:
+    async def project_stream(self) -> AsyncIterator[TextIO | None]:
         if self._meta.project_config_id:
             yield await self._to_stream(self._meta.project_config_id)
         else:

@@ -3,7 +3,8 @@ import os
 import pathlib
 import pytest
 from apolo_sdk import Client, get as api_get, login_with_token
-from typing import Any, AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator
+from typing import Any
 from yarl import URL
 
 

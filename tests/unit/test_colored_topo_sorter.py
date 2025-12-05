@@ -1,5 +1,5 @@
 import pytest
-from typing import Mapping, Sequence, Set, Tuple
+from collections.abc import Mapping, Sequence
 
 from apolo_flow.colored_topo_sorter import ColoredTopoSorter, CycleError
 
@@ -105,8 +105,8 @@ from apolo_flow.colored_topo_sorter import ColoredTopoSorter, CycleError
 )
 def test_graphs(
     graph: Mapping[int, Mapping[int, str]],
-    colorings: Sequence[Tuple[int, str]],
-    expected_ready: Sequence[Set[int]],
+    colorings: Sequence[tuple[int, str]],
+    expected_ready: Sequence[set[int]],
 ) -> None:
     topo = ColoredTopoSorter(graph)
     for (node, color), ready in zip(colorings, expected_ready):

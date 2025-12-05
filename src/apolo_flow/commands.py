@@ -6,23 +6,15 @@
 
 import logging
 import re
+from collections.abc import AsyncIterator, Mapping
 from types import TracebackType
-from typing import (
-    AsyncContextManager,
-    AsyncIterator,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    Type,
-)
+from typing import AsyncContextManager
 
 
 log = logging.getLogger(__name__)
 
 
-def _compile(commands: List[Tuple[str, str]]) -> Dict[str, "re.Pattern[bytes]"]:
+def _compile(commands: list[tuple[str, str]]) -> dict[str, "re.Pattern[bytes]"]:
     ret = {}
     for cmd, regexp in commands:
         cmd2 = cmd.replace("-", "_")
@@ -47,9 +39,9 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
 
     def __init__(self) -> None:
         self._buf = bytearray()
-        self._outputs: Dict[str, str] = {}
-        self._states: Dict[str, str] = {}
-        self._stop_commands: Optional[bytes] = None
+        self._outputs: dict[str, str] = {}
+        self._states: dict[str, str] = {}
+        self._stop_commands: bytes | None = None
 
     @property
     def outputs(self) -> Mapping[str, str]:
@@ -64,9 +56,9 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
 
     async def __aexit__(
         self,
-        exc_tp: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_tp: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         assert not self._buf, "Missed call feed_eof()"
 
@@ -86,7 +78,7 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
             yield ret
         self._buf = bytearray()
 
-    async def feed_line(self, origin_line: bytes) -> Optional[bytes]:
+    async def feed_line(self, origin_line: bytes) -> bytes | None:
         line = origin_line.strip()
         if not line.startswith(b"::"):
             return origin_line

@@ -6,8 +6,9 @@ from apolo_cli.asyncio_utils import Runner
 from apolo_sdk import ResourceNotFound
 from asyncio import iscoroutinefunction
 from click.types import convert_type
+from collections.abc import Awaitable, Callable, Iterator
 from contextlib import contextmanager
-from typing import Any, Awaitable, Callable, Iterator, TypeVar
+from typing import Any, TypeVar
 from typing_extensions import ParamSpec
 
 from apolo_flow.storage.base import Storage

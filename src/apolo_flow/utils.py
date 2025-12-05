@@ -5,28 +5,15 @@ import humanize
 import logging
 import time
 from apolo_sdk import BadGateway, ClientError, JobStatus, ServerNotAvailable
+from collections.abc import Awaitable, Callable, Coroutine, Iterable, Iterator, Sequence
 from functools import wraps
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Coroutine,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
-from typing_extensions import Concatenate, ParamSpec, Protocol
+from typing import Any, Concatenate, TypeVar, cast
+from typing_extensions import ParamSpec, Protocol
 
 from .types import COLORS, FullID, GitInfo, TaskStatus
 
 
-def fmt_status(status: Union[JobStatus, TaskStatus]) -> str:
+def fmt_status(status: JobStatus | TaskStatus) -> str:
     if isinstance(status, JobStatus):
         status = TaskStatus(status)
     else:
@@ -35,7 +22,7 @@ def fmt_status(status: Union[JobStatus, TaskStatus]) -> str:
     return f"[{color}]{status.value}[/{color}]"
 
 
-def fmt_id(id: Union[str, FullID]) -> str:
+def fmt_id(id: str | FullID) -> str:
     if isinstance(id, str):
         s_id = id
     else:
@@ -47,7 +34,7 @@ def fmt_raw_id(raw_id: str) -> str:
     return f"[bright_black]{raw_id}[/bright_black]"
 
 
-def fmt_datetime(when: Optional[datetime.datetime]) -> str:
+def fmt_datetime(when: datetime.datetime | None) -> str:
     if when is None:
         return "N/A"
     delta = datetime.datetime.now(datetime.timezone.utc) - when
@@ -118,7 +105,7 @@ class GlobalOptions(Protocol):
     def show_traceback(self) -> bool: ...
 
 
-def encode_global_options(options: GlobalOptions) -> List[str]:
+def encode_global_options(options: GlobalOptions) -> list[str]:
     global_options = []
     verbosity_abs = abs(options.verbosity)
     if options.verbosity < 0:
@@ -153,7 +140,7 @@ class retries:
         delay: float = 0.1,
         factor: float = 1.5,
         cap: float = 5,
-        exceptions: Sequence[Type[Exception]] = (),
+        exceptions: Sequence[type[Exception]] = (),
         logger: Callable[[str], None] = log.info,
     ) -> None:
         self._msg = msg
@@ -178,7 +165,7 @@ class retries:
         pass
 
     async def __aexit__(
-        self, type: Type[BaseException], value: BaseException, tb: Any
+        self, type: type[BaseException], value: BaseException, tb: Any
     ) -> bool:
         if type is None:
             # Stop iteration
@@ -204,7 +191,7 @@ def async_retried(
     delay: float = 0.1,
     factor: float = 1.5,
     cap: float = 5,
-    exceptions: Sequence[Type[Exception]] = (),
+    exceptions: Sequence[type[Exception]] = (),
 ) -> Callable[[F], F]:
     def _deco(func: F) -> F:
         @wraps(func)
@@ -252,12 +239,12 @@ def retry(
         ):
             async with retry:
                 return await func(self, *args, **kwargs)
-        assert False, "Unreachable"
+        raise AssertionError("Unreachable")
 
     return inner  # type: ignore
 
 
-async def collect_git_info() -> Optional[GitInfo]:
+async def collect_git_info() -> GitInfo | None:
     async def _run_git(*args: str) -> str:
         proc = await asyncio.create_subprocess_exec(
             "git",

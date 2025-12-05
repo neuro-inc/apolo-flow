@@ -1,7 +1,7 @@
 import dataclasses
 
 import re
-from typing import Iterator, Optional
+from collections.abc import Iterator
 
 from .types import LocalPath
 
@@ -34,11 +34,7 @@ class Token:
         return self.value
 
     def pformat(self) -> str:
-        return "{} {} '{}'".format(
-            self._pos_str().ljust(20),
-            self.type.ljust(14),
-            self.value,
-        )
+        return f"{self._pos_str().ljust(20)} {self.type.ljust(14)} '{self.value}'"
 
 
 class LexerError(Exception):
@@ -103,7 +99,7 @@ class Tokenizer:
             errline = s.splitlines()[pos.line - start.line]
             raise LexerError(pos, " " * start.col + errline)
 
-    def match_text(self, s: str, i: int, start: Pos, pos: Pos) -> Optional[Token]:
+    def match_text(self, s: str, i: int, start: Pos, pos: Pos) -> Token | None:
         ltmpl = self.LTMPL_RE.search(s, i)
         if ltmpl is None:
             idx = len(s)

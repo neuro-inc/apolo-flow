@@ -1,9 +1,9 @@
 import pathlib
 import pytest
 from apolo_sdk import Client
+from collections.abc import AsyncIterator, Mapping
 from datetime import timedelta
 from textwrap import dedent
-from typing import AsyncIterator, Mapping, Optional, Tuple, Union
 from unittest.mock import ANY, PropertyMock
 from yarl import URL
 
@@ -642,14 +642,14 @@ async def test_batch_action_default(batch_config_loader: ConfigLoader) -> None:
 
 
 def _make_ast_call(
-    args: Mapping[str, Union[bool, int, float, str]],
+    args: Mapping[str, bool | int | float | str],
 ) -> ast.BaseActionCall:
-    def _make_simple_str_expr(res: Optional[str]) -> SimpleStrExpr:
+    def _make_simple_str_expr(res: str | None) -> SimpleStrExpr:
         return SimpleStrExpr(
             Pos(0, 0, LocalPath("fake")), Pos(0, 0, LocalPath("fake")), res
         )
 
-    def _make_primitive_expr(res: Union[bool, int, float, str]) -> PrimitiveExpr:
+    def _make_primitive_expr(res: bool | int | float | str) -> PrimitiveExpr:
         return PrimitiveExpr(
             Pos(0, 0, LocalPath("fake")), Pos(0, 0, LocalPath("fake")), res
         )
@@ -663,16 +663,16 @@ def _make_ast_call(
 
 
 def _make_ast_inputs(
-    args: Mapping[str, Tuple[Optional[Union[bool, int, float, str]], InputType]],
+    args: Mapping[str, tuple[bool | int | float | str | None, InputType]],
 ) -> Mapping[str, ast.Input]:
     def _make_opt_primitive_expr(
-        res: Optional[Union[bool, int, float, str]],
+        res: bool | int | float | str | None,
     ) -> SimpleOptPrimitiveExpr:
         return SimpleOptPrimitiveExpr(
             Pos(0, 0, LocalPath("fake")), Pos(0, 0, LocalPath("fake")), res
         )
 
-    def _make_opt_str_expr(res: Optional[str]) -> SimpleOptStrExpr:
+    def _make_opt_str_expr(res: str | None) -> SimpleOptStrExpr:
         return SimpleOptStrExpr(
             Pos(0, 0, LocalPath("fake")), Pos(0, 0, LocalPath("fake")), res
         )

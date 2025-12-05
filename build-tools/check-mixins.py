@@ -2,13 +2,13 @@
 
 import dataclasses
 
-from typing import AbstractSet, Type
+from typing import AbstractSet
 
 from apolo_flow import ast, expr
 
 
 def check_mixin(
-    base: Type[ast.Base], mixin: Type[ast.Base], allowed_extra_fields: AbstractSet[str]
+    base: type[ast.Base], mixin: type[ast.Base], allowed_extra_fields: AbstractSet[str]
 ) -> None:
     base_fields = {f.name: f for f in dataclasses.fields(base)}
     mixin_fields = {f.name: f for f in dataclasses.fields(mixin)}

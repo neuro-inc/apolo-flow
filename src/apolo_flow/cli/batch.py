@@ -2,10 +2,10 @@ import apolo_sdk
 import click
 import signal
 from apolo_cli.parse_utils import parse_timedelta
+from collections.abc import Sequence
 from contextlib import AsyncExitStack
 from datetime import datetime, timezone
 from dateutil.parser import isoparse
-from typing import List, Optional, Sequence, Tuple
 
 from apolo_flow.batch_runner import BatchRunner
 from apolo_flow.cli.click_types import BAKE, BATCH, BATCH_OR_ALL, BakeTaskType
@@ -54,9 +54,9 @@ async def bake(
     root: Root,
     batch: str,
     local_executor: bool,
-    meta_from_file: Optional[str],
-    param: List[Tuple[str, str]],
-    name: Optional[str],
+    meta_from_file: str | None,
+    param: list[tuple[str, str]],
+    name: str | None,
     tag: Sequence[str],
 ) -> None:
     """Start a batch.
@@ -69,7 +69,7 @@ async def bake(
         runner = await stack.enter_async_context(
             BatchRunner(root.config_dir, root.console, client, storage, root)
         )
-        params = {key: value for key, value in param}
+        params = dict(param)
         if meta_from_file is not None:
             bake_meta = parse_bake_meta(LocalPath(meta_from_file))
             params = {**bake_meta, **params}
@@ -149,8 +149,8 @@ async def execute(
 async def bakes(
     root: Root,
     tag: Sequence[str],
-    since: Optional[str],
-    until: Optional[str],
+    since: str | None,
+    until: str | None,
     recent_first: bool,
 ) -> None:
     """List existing bakes."""
@@ -206,7 +206,7 @@ async def inspect(
     root: Root,
     bake: str,
     attempt: int,
-    output_graph: Optional[str],
+    output_graph: str | None,
     dot: bool,
     pdf: bool,
     view: bool,
@@ -222,7 +222,7 @@ async def inspect(
             BatchRunner(root.config_dir, root.console, client, storage, root)
         )
         if output_graph is not None:
-            real_output: Optional[LocalPath] = LocalPath(output_graph)
+            real_output: LocalPath | None = LocalPath(output_graph)
         else:
             real_output = None
         bake_id = await resolve_bake(bake, project=runner.project_id, storage=storage)
@@ -322,7 +322,7 @@ async def cancel(
 async def clear_cache(
     root: Root,
     batch: str,
-    task_id: Optional[str],
+    task_id: str | None,
 ) -> None:
     """Clear cache.
 
@@ -387,7 +387,7 @@ async def restart(
         )
 
 
-def _parse_date(value: Optional[str]) -> Optional[datetime]:
+def _parse_date(value: str | None) -> datetime | None:
     if value:
         try:
             return isoparse(value)

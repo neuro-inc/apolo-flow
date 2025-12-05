@@ -1,5 +1,6 @@
 from collections import defaultdict
-from typing import AbstractSet, Dict, Generic, Mapping, Set, TypeVar
+from collections.abc import Mapping
+from typing import AbstractSet, Generic, TypeVar
 
 
 _K = TypeVar("_K")
@@ -13,11 +14,11 @@ class CycleError(ValueError):
 class ColoredTopoSorter(Generic[_K, _T]):
     def __init__(self, graph: Mapping[_K, Mapping[_K, _T]]):
         self._graph = graph
-        self._node_rev_deps: Dict[_K, Dict[_T, Set[_K]]] = defaultdict(
+        self._node_rev_deps: dict[_K, dict[_T, set[_K]]] = defaultdict(
             lambda: defaultdict(set)
         )
-        self._node_deps_cnt: Dict[_K, int] = dict()
-        self._color2nodes: Dict[_T, Set[_K]] = defaultdict(set)
+        self._node_deps_cnt: dict[_K, int] = {}
+        self._color2nodes: dict[_T, set[_K]] = defaultdict(set)
         self._ready = set()
         for node, deps in graph.items():
             if not deps:

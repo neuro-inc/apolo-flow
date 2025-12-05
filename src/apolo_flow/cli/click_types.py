@@ -5,7 +5,7 @@ from apolo_cli.asyncio_utils import Runner
 from apolo_sdk import ResourceNotFound
 from click.shell_completion import CompletionItem
 from contextlib import AsyncExitStack
-from typing import Generic, List, Optional, TypeVar, cast
+from typing import Generic, TypeVar, cast
 
 from apolo_flow.batch_runner import BatchRunner
 from apolo_flow.cli.root import Root
@@ -22,8 +22,8 @@ class AsyncType(click.ParamType, Generic[_T], abc.ABC):
     def convert(
         self,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> _T:
         assert ctx is not None
         root = cast(Root, ctx.obj)
@@ -35,14 +35,14 @@ class AsyncType(click.ParamType, Generic[_T], abc.ABC):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> _T:
         pass
 
     def shell_complete(
         self, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         root = cast(Root, ctx.obj)
         with Runner() as runner:
             return runner.run(self.async_shell_complete(root, ctx, param, incomplete))
@@ -50,7 +50,7 @@ class AsyncType(click.ParamType, Generic[_T], abc.ABC):
     @abc.abstractmethod
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         pass
 
 
@@ -64,14 +64,14 @@ class LiveJobType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())
             storage: Storage = await stack.enter_async_context(ApiStorage(client))
@@ -102,14 +102,14 @@ class LiveJobSuffixType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         job_id = ctx.params[self._job_id_param_name]
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())
@@ -135,14 +135,14 @@ class LiveImageType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())
             storage: Storage = await stack.enter_async_context(ApiStorage(client))
@@ -174,14 +174,14 @@ class LiveVolumeType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())
             storage: Storage = await stack.enter_async_context(ApiStorage(client))
@@ -213,14 +213,14 @@ class BatchType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         variants = []
         for file in root.config_dir.config_dir.rglob("*.yml"):
             # We are not trying to parse properly to allow autocompletion of
@@ -245,14 +245,14 @@ class BakeType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         variants = []
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())
@@ -295,15 +295,15 @@ class BakeTaskType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
-        variants: List[str] = []
+    ) -> list[CompletionItem]:
+        variants: list[str] = []
         bake_id = ctx.params[self._bake_id_param_name]
         attempt_no = ctx.params[self._attempt_no_param_name]
         async with AsyncExitStack() as stack:
@@ -345,14 +345,14 @@ class ProjectType(AsyncType[str]):
         self,
         root: Root,
         value: str,
-        param: Optional[click.Parameter],
-        ctx: Optional[click.Context],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
     ) -> str:
         return value
 
     async def async_shell_complete(
         self, root: Root, ctx: click.Context, param: click.Parameter, incomplete: str
-    ) -> List[CompletionItem]:
+    ) -> list[CompletionItem]:
         variants = []
         async with AsyncExitStack() as stack:
             client = await stack.enter_async_context(apolo_sdk.get())

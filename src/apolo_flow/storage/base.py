@@ -3,18 +3,9 @@ from dataclasses import dataclass
 import abc
 import datetime
 from apolo_sdk import JobStatusItem, ResourceNotFound
+from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from types import TracebackType
-from typing import (
-    AbstractSet,
-    AsyncIterator,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Type,
-    Union,
-    overload,
-)
+from typing import AbstractSet, Optional, overload
 from yarl import URL
 
 from apolo_flow.types import FullID, GitInfo, ImageStatus, TaskStatus
@@ -37,12 +28,12 @@ class LiveJob:
     project_id: str
     multi: bool
     tags: Sequence[str]
-    raw_id: Optional[str] = None
+    raw_id: str | None = None
 
 
 @dataclass(frozen=True)
 class BakeMeta:
-    git_info: Optional[GitInfo]
+    git_info: GitInfo | None
 
 
 @dataclass(frozen=True)
@@ -50,13 +41,13 @@ class Bake:
     id: str
     project_id: str
     batch: str
-    name: Optional[str]
+    name: str | None
     tags: Sequence[str]
     created_at: datetime.datetime
     meta: BakeMeta
     # prefix -> { id -> deps }
     graphs: Mapping[FullID, Mapping[FullID, AbstractSet[FullID]]]
-    params: Optional[Mapping[str, str]]
+    params: Mapping[str, str] | None
     last_attempt: Optional["Attempt"]
 
 
@@ -64,7 +55,7 @@ class Bake:
 class ConfigsMeta:
     workspace: str
     flow_config_id: str
-    project_config_id: Optional[str]
+    project_config_id: str | None
     action_config_ids: Mapping[str, str]
 
 
@@ -76,7 +67,7 @@ class Attempt:
     created_at: datetime.datetime
     result: TaskStatus
     configs_meta: ConfigsMeta
-    executor_id: Optional[str] = None
+    executor_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -96,9 +87,9 @@ class Task:
     id: str
     yaml_id: FullID
     attempt_id: str
-    raw_id: Optional[str]
-    outputs: Optional[Mapping[str, str]]
-    state: Optional[Mapping[str, str]]
+    raw_id: str | None
+    outputs: Mapping[str, str] | None
+    state: Mapping[str, str] | None
     statuses: Sequence[TaskStatusItem]
 
     @property
@@ -110,7 +101,7 @@ class Task:
         return self.statuses[0].when
 
     @property
-    def finished_at(self) -> Optional[datetime.datetime]:
+    def finished_at(self) -> datetime.datetime | None:
         if self.status.is_finished:
             return self.statuses[-1].when
         return None
@@ -144,9 +135,9 @@ class BakeImage:
     yaml_defs: Sequence[FullID]
     ref: str
     status: ImageStatus
-    context_on_storage: Optional[URL] = None
-    dockerfile_rel: Optional[str] = None
-    builder_job_id: Optional[str] = None
+    context_on_storage: URL | None = None
+    dockerfile_rel: str | None = None
+    builder_job_id: str | None = None
 
 
 class _Unset:
@@ -159,9 +150,9 @@ class Storage(abc.ABC):
 
     async def __aexit__(
         self,
-        exc_typ: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_typ: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.close()
 
@@ -187,10 +178,10 @@ class Storage(abc.ABC):
         self,
         *,
         yaml_id: str,
-        project_name: Optional[str] = None,
-        owner: Optional[str] = None,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
+        project_name: str | None = None,
+        owner: str | None = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
     ) -> "ProjectStorage":
         pass
 
@@ -198,12 +189,12 @@ class Storage(abc.ABC):
     def project(
         self,
         *,
-        id: Optional[str] = None,
-        yaml_id: Optional[str] = None,
-        project_name: Optional[str] = None,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
-        owner: Optional[str] = None,
+        id: str | None = None,
+        yaml_id: str | None = None,
+        project_name: str | None = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
+        owner: str | None = None,
     ) -> "ProjectStorage":
         pass
 
@@ -216,18 +207,18 @@ class Storage(abc.ABC):
         self,
         yaml_id: str,
         project_name: str,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
     ) -> Project:
         pass
 
     @abc.abstractmethod
     def list_projects(
         self,
-        name: Optional[str] = None,
-        cluster: Optional[str] = None,
-        project_name: Optional[str] = None,
-        org_name: Optional[str] = None,
+        name: str | None = None,
+        cluster: str | None = None,
+        project_name: str | None = None,
+        org_name: str | None = None,
     ) -> AsyncIterator[Project]:
         pass
 
@@ -237,7 +228,7 @@ class Storage(abc.ABC):
         project_name: str,
         cluster: str,
         org_name: str,
-        owner: Optional[str] = None,
+        owner: str | None = None,
     ) -> Project:
         try:
             return await self.project(
@@ -266,9 +257,9 @@ class ProjectStorage(abc.ABC):
     @abc.abstractmethod
     def list_bakes(
         self,
-        tags: Optional[AbstractSet[str]] = None,
-        since: Optional[datetime.datetime] = None,
-        until: Optional[datetime.datetime] = None,
+        tags: AbstractSet[str] | None = None,
+        since: datetime.datetime | None = None,
+        until: datetime.datetime | None = None,
         recent_first: bool = False,
     ) -> AsyncIterator[Bake]:
         pass
@@ -280,8 +271,8 @@ class ProjectStorage(abc.ABC):
         # prefix -> { id -> deps }
         meta: BakeMeta,
         graphs: Mapping[FullID, Mapping[FullID, AbstractSet[FullID]]],
-        params: Optional[Mapping[str, str]] = None,
-        name: Optional[str] = None,
+        params: Mapping[str, str] | None = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
     ) -> Bake:
         pass
@@ -298,8 +289,8 @@ class ProjectStorage(abc.ABC):
     def bake(
         self,
         *,
-        id: Optional[str] = None,
-        name: Optional[str] = None,
+        id: str | None = None,
+        name: str | None = None,
     ) -> "BakeStorage":
         pass
 
@@ -318,8 +309,8 @@ class ProjectStorage(abc.ABC):
     @abc.abstractmethod
     async def delete_cache_entries(
         self,
-        batch: Optional[str] = None,
-        task_id: Optional[FullID] = None,
+        batch: str | None = None,
+        task_id: FullID | None = None,
     ) -> None:
         pass
 
@@ -337,10 +328,10 @@ class ProjectStorage(abc.ABC):
     def cache_entry(
         self,
         *,
-        id: Optional[str] = None,
-        task_id: Optional[FullID] = None,
-        batch: Optional[str] = None,
-        key: Optional[str] = None,
+        id: str | None = None,
+        task_id: FullID | None = None,
+        batch: str | None = None,
+        key: str | None = None,
     ) -> "CacheEntryStorage":
         pass
 
@@ -356,7 +347,7 @@ class ProjectStorage(abc.ABC):
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         pass
 
@@ -366,7 +357,7 @@ class ProjectStorage(abc.ABC):
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         pass
 
@@ -386,8 +377,8 @@ class ProjectStorage(abc.ABC):
     def live_job(
         self,
         *,
-        id: Optional[str] = None,
-        yaml_id: Optional[str] = None,
+        id: str | None = None,
+        yaml_id: str | None = None,
     ) -> "LiveJobStorage":
         pass
 
@@ -405,8 +396,8 @@ class BakeStorage(abc.ABC):
     async def create_attempt(
         self,
         configs_meta: ConfigsMeta,
-        number: Optional[int] = None,
-        executor_id: Optional[str] = None,
+        number: int | None = None,
+        executor_id: str | None = None,
         result: TaskStatus = TaskStatus.PENDING,
     ) -> Attempt:
         pass
@@ -429,9 +420,9 @@ class BakeStorage(abc.ABC):
         yaml_defs: Sequence[FullID],
         ref: str,
         status: ImageStatus = ImageStatus.PENDING,
-        context_on_storage: Optional[URL] = None,
-        dockerfile_rel: Optional[str] = None,
-        builder_job_id: Optional[str] = None,
+        context_on_storage: URL | None = None,
+        dockerfile_rel: str | None = None,
+        builder_job_id: str | None = None,
     ) -> BakeImage:
         pass
 
@@ -447,8 +438,8 @@ class BakeStorage(abc.ABC):
     def attempt(
         self,
         *,
-        id: Optional[str] = None,
-        number: Optional[int] = None,
+        id: str | None = None,
+        number: int | None = None,
     ) -> "AttemptStorage":
         pass
 
@@ -477,8 +468,8 @@ class BakeStorage(abc.ABC):
     def bake_image(
         self,
         *,
-        id: Optional[str] = None,
-        ref: Optional[str] = None,
+        id: str | None = None,
+        ref: str | None = None,
     ) -> "BakeImageStorage":
         pass
 
@@ -492,8 +483,8 @@ class AttemptStorage(abc.ABC):
     async def update(
         self,
         *,
-        executor_id: Union[Optional[str], Type[_Unset]] = _Unset,
-        result: Union[TaskStatus, Type[_Unset]] = _Unset,
+        executor_id: str | type[_Unset] | None = _Unset,
+        result: TaskStatus | type[_Unset] = _Unset,
     ) -> Attempt:
         pass
 
@@ -505,10 +496,10 @@ class AttemptStorage(abc.ABC):
     async def create_task(
         self,
         yaml_id: FullID,
-        raw_id: Optional[str],
-        status: Union[TaskStatusItem, TaskStatus],
-        outputs: Optional[Mapping[str, str]] = None,
-        state: Optional[Mapping[str, str]] = None,
+        raw_id: str | None,
+        status: TaskStatusItem | TaskStatus,
+        outputs: Mapping[str, str] | None = None,
+        state: Mapping[str, str] | None = None,
     ) -> Task:
         pass
 
@@ -524,8 +515,8 @@ class AttemptStorage(abc.ABC):
     def task(
         self,
         *,
-        id: Optional[str] = None,
-        yaml_id: Optional[FullID] = None,
+        id: str | None = None,
+        yaml_id: FullID | None = None,
     ) -> "TaskStorage":
         pass
 
@@ -539,9 +530,9 @@ class TaskStorage(abc.ABC):
     async def update(
         self,
         *,
-        outputs: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        state: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        new_status: Optional[Union[TaskStatusItem, TaskStatus]] = None,
+        outputs: Mapping[str, str] | type[_Unset] | None = _Unset,
+        state: Mapping[str, str] | type[_Unset] | None = _Unset,
+        new_status: TaskStatusItem | TaskStatus | None = None,
     ) -> Task:
         pass
 
@@ -567,8 +558,8 @@ class BakeImageStorage(abc.ABC):
     async def update(
         self,
         *,
-        status: Union[ImageStatus, Type[_Unset]] = _Unset,
-        builder_job_id: Union[Optional[str], Type[_Unset]] = _Unset,
+        status: ImageStatus | type[_Unset] = _Unset,
+        builder_job_id: str | type[_Unset] | None = _Unset,
     ) -> BakeImage:
         pass
 

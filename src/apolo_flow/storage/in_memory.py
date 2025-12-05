@@ -3,18 +3,8 @@ from dataclasses import replace
 import datetime
 import secrets
 from apolo_sdk import ResourceNotFound
-from typing import (
-    AbstractSet,
-    AsyncIterator,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Type,
-    Union,
-)
+from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
+from typing import AbstractSet
 from yarl import URL
 
 from apolo_flow.storage.base import (
@@ -53,14 +43,14 @@ def _now() -> datetime.datetime:
 
 class InMemoryDB:
     def __init__(self) -> None:
-        self.projects: Dict[str, Project] = {}
-        self.bakes: Dict[str, Bake] = {}
-        self.cache_entries: Dict[str, CacheEntry] = {}
-        self.live_jobs: Dict[str, LiveJob] = {}
-        self.attempts: Dict[str, Attempt] = {}
-        self.config_files: Dict[str, ConfigFile] = {}
-        self.bake_images: Dict[str, BakeImage] = {}
-        self.tasks: Dict[str, Task] = {}
+        self.projects: dict[str, Project] = {}
+        self.bakes: dict[str, Bake] = {}
+        self.cache_entries: dict[str, CacheEntry] = {}
+        self.live_jobs: dict[str, LiveJob] = {}
+        self.attempts: dict[str, Attempt] = {}
+        self.config_files: dict[str, ConfigFile] = {}
+        self.bake_images: dict[str, BakeImage] = {}
+        self.tasks: dict[str, Task] = {}
 
 
 class InMemoryStorage(Storage):
@@ -86,12 +76,12 @@ class InMemoryStorage(Storage):
     def project(
         self,
         *,
-        id: Optional[str] = None,
-        project_name: Optional[str] = None,
-        yaml_id: Optional[str] = None,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
-        owner: Optional[str] = None,
+        id: str | None = None,
+        project_name: str | None = None,
+        yaml_id: str | None = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
+        owner: str | None = None,
     ) -> "ProjectStorage":
         if id:
             return InMemoryProjectStorage(id, self._db)
@@ -116,8 +106,8 @@ class InMemoryStorage(Storage):
         self,
         yaml_id: str,
         project_name: str,
-        cluster: Optional[str] = None,
-        org_name: Optional[str] = None,
+        cluster: str | None = None,
+        org_name: str | None = None,
     ) -> Project:
         project = Project(
             id=_make_id(),
@@ -132,10 +122,10 @@ class InMemoryStorage(Storage):
 
     async def list_projects(
         self,
-        name: Optional[str] = None,
-        cluster: Optional[str] = None,
-        project_name: Optional[str] = None,
-        org_name: Optional[str] = None,
+        name: str | None = None,
+        cluster: str | None = None,
+        project_name: str | None = None,
+        org_name: str | None = None,
     ) -> AsyncIterator[Project]:
         for project in self._db.projects.values():
             if name and project.yaml_id != name:
@@ -165,12 +155,12 @@ class InMemoryProjectStorage(ProjectStorage):
 
     async def list_bakes(
         self,
-        tags: Optional[AbstractSet[str]] = None,
-        since: Optional[datetime.datetime] = None,
-        until: Optional[datetime.datetime] = None,
+        tags: AbstractSet[str] | None = None,
+        since: datetime.datetime | None = None,
+        until: datetime.datetime | None = None,
         recent_first: bool = False,
     ) -> AsyncIterator[Bake]:
-        unsorted: List[Bake] = []
+        unsorted: list[Bake] = []
         for bake in self._db.bakes.values():
             if bake.project_id != self._project_id:
                 continue
@@ -180,7 +170,7 @@ class InMemoryProjectStorage(ProjectStorage):
                 continue
             if until is not None and bake.created_at >= until:
                 continue
-            last_attempt: Optional[Attempt] = None
+            last_attempt: Attempt | None = None
             try:
                 last_attempt = await self.bake(id=bake.id).last_attempt().get()
             except ResourceNotFound:
@@ -197,8 +187,8 @@ class InMemoryProjectStorage(ProjectStorage):
         batch: str,
         meta: BakeMeta,
         graphs: Mapping[FullID, Mapping[FullID, AbstractSet[FullID]]],
-        params: Optional[Mapping[str, str]] = None,
-        name: Optional[str] = None,
+        params: Mapping[str, str] | None = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
     ) -> Bake:
         bake = Bake(
@@ -216,13 +206,11 @@ class InMemoryProjectStorage(ProjectStorage):
         self._db.bakes[bake.id] = bake
         return bake
 
-    def bake(
-        self, *, id: Optional[str] = None, name: Optional[str] = None
-    ) -> "BakeStorage":
+    def bake(self, *, id: str | None = None, name: str | None = None) -> "BakeStorage":
         if id:
             return InMemoryBakeStorage(id, self._db)
         else:
-            bakes: List[Bake] = []
+            bakes: list[Bake] = []
             for bake in self._db.bakes.values():
                 if bake.name == name and bake.project_id == self._project_id:
                     bakes.append(bake)
@@ -255,7 +243,7 @@ class InMemoryProjectStorage(ProjectStorage):
         return entry
 
     async def delete_cache_entries(
-        self, batch: Optional[str] = None, task_id: Optional[FullID] = None
+        self, batch: str | None = None, task_id: FullID | None = None
     ) -> None:
         if batch is None:
             self._db.cache_entries.clear()
@@ -266,10 +254,10 @@ class InMemoryProjectStorage(ProjectStorage):
     def cache_entry(
         self,
         *,
-        id: Optional[str] = None,
-        task_id: Optional[FullID] = None,
-        batch: Optional[str] = None,
-        key: Optional[str] = None,
+        id: str | None = None,
+        task_id: FullID | None = None,
+        batch: str | None = None,
+        key: str | None = None,
     ) -> "CacheEntryStorage":
         if id:
             return InMemoryCacheEntryStorage(id, self._db)
@@ -293,7 +281,7 @@ class InMemoryProjectStorage(ProjectStorage):
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         live_job = LiveJob(
             id=_make_id(),
@@ -311,7 +299,7 @@ class InMemoryProjectStorage(ProjectStorage):
         yaml_id: str,
         multi: bool,
         tags: Iterable[str],
-        raw_id: Optional[str] = None,
+        raw_id: str | None = None,
     ) -> LiveJob:
         try:
             live_job_id = (await self.live_job(yaml_id=yaml_id).get()).id
@@ -330,7 +318,7 @@ class InMemoryProjectStorage(ProjectStorage):
             return live_job
 
     def live_job(
-        self, *, id: Optional[str] = None, yaml_id: Optional[str] = None
+        self, *, id: str | None = None, yaml_id: str | None = None
     ) -> "LiveJobStorage":
         if id:
             return InMemoryLiveJobStorage(id, self._db)
@@ -363,8 +351,8 @@ class InMemoryBakeStorage(BakeStorage):
     async def create_attempt(
         self,
         configs_meta: ConfigsMeta,
-        number: Optional[int] = None,
-        executor_id: Optional[str] = None,
+        number: int | None = None,
+        executor_id: str | None = None,
         result: TaskStatus = TaskStatus.PENDING,
     ) -> Attempt:
         attempts_cnt = len([_ async for _ in self.list_attempts()])
@@ -400,9 +388,9 @@ class InMemoryBakeStorage(BakeStorage):
         yaml_defs: Sequence[FullID],
         ref: str,
         status: ImageStatus = ImageStatus.PENDING,
-        context_on_storage: Optional[URL] = None,
-        dockerfile_rel: Optional[str] = None,
-        builder_job_id: Optional[str] = None,
+        context_on_storage: URL | None = None,
+        dockerfile_rel: str | None = None,
+        builder_job_id: str | None = None,
     ) -> BakeImage:
         bake_image = BakeImage(
             id=_make_id(),
@@ -418,7 +406,7 @@ class InMemoryBakeStorage(BakeStorage):
         return bake_image
 
     def attempt(
-        self, *, id: Optional[str] = None, number: Optional[int] = None
+        self, *, id: str | None = None, number: int | None = None
     ) -> "AttemptStorage":
         if id:
             return InMemoryAttemptStorage(id, self._db)
@@ -436,7 +424,7 @@ class InMemoryBakeStorage(BakeStorage):
         return InMemoryConfigFileStorage(id, self._db)
 
     def bake_image(
-        self, *, id: Optional[str] = None, ref: Optional[str] = None
+        self, *, id: str | None = None, ref: str | None = None
     ) -> "BakeImageStorage":
         if id:
             return InMemoryBakeImageStorage(id, self._db)
@@ -461,8 +449,8 @@ class InMemoryAttemptStorage(AttemptStorage):
     async def update(
         self,
         *,
-        executor_id: Union[Optional[str], Type[_Unset]] = _Unset,
-        result: Union[TaskStatus, Type[_Unset]] = _Unset,
+        executor_id: str | type[_Unset] | None = _Unset,
+        result: TaskStatus | type[_Unset] = _Unset,
     ) -> Attempt:
         attempt = await self.get()
         if executor_id is not _Unset:
@@ -482,10 +470,10 @@ class InMemoryAttemptStorage(AttemptStorage):
     async def create_task(
         self,
         yaml_id: FullID,
-        raw_id: Optional[str],
-        status: Union[TaskStatusItem, TaskStatus],
-        outputs: Optional[Mapping[str, str]] = None,
-        state: Optional[Mapping[str, str]] = None,
+        raw_id: str | None,
+        status: TaskStatusItem | TaskStatus,
+        outputs: Mapping[str, str] | None = None,
+        state: Mapping[str, str] | None = None,
     ) -> Task:
         if isinstance(status, TaskStatus):
             status = TaskStatusItem(when=_now(), status=status)
@@ -502,7 +490,7 @@ class InMemoryAttemptStorage(AttemptStorage):
         return task
 
     def task(
-        self, *, id: Optional[str] = None, yaml_id: Optional[FullID] = None
+        self, *, id: str | None = None, yaml_id: FullID | None = None
     ) -> "TaskStorage":
         if id:
             return InMemoryTaskStorage(id, self._db)
@@ -527,9 +515,9 @@ class InMemoryTaskStorage(TaskStorage):
     async def update(
         self,
         *,
-        outputs: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        state: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        new_status: Optional[Union[TaskStatusItem, TaskStatus]] = None,
+        outputs: Mapping[str, str] | type[_Unset] | None = _Unset,
+        state: Mapping[str, str] | type[_Unset] | None = _Unset,
+        new_status: TaskStatusItem | TaskStatus | None = None,
     ) -> Task:
         task = await self.get()
         if outputs is not _Unset:
@@ -570,8 +558,8 @@ class InMemoryBakeImageStorage(BakeImageStorage):
     async def update(
         self,
         *,
-        status: Union[ImageStatus, Type[_Unset]] = _Unset,
-        builder_job_id: Union[Optional[str], Type[_Unset]] = _Unset,
+        status: ImageStatus | type[_Unset] = _Unset,
+        builder_job_id: str | type[_Unset] | None = _Unset,
     ) -> BakeImage:
         image = await self.get()
         if status is not _Unset:

@@ -24,26 +24,13 @@ from apolo_sdk import (
     VolumeParseResult,
 )
 from collections import defaultdict
+from collections.abc import AsyncIterator, Iterable, Mapping, Sequence
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, TaskID, TextColumn
-from typing import (
-    AbstractSet,
-    AsyncIterator,
-    Dict,
-    Generic,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import AbstractSet, Generic, TypeVar
 from yarl import URL
 
 from . import ast
@@ -171,12 +158,12 @@ class Graph(Generic[_T]):
 
     def __init__(self, graph: Mapping[str, Mapping[str, ast.NeedsLevel]], meta: _T):
         topo = ColoredTopoSorter(graph)
-        self._topos: Dict[FullID, ColoredTopoSorter[str, ast.NeedsLevel]] = {(): topo}
-        self._sizes: Dict[FullID, int] = {(): len(graph)}
-        self._metas: Dict[FullID, _T] = {(): meta}
-        self._ready: Set[FullID] = set()
-        self._done: Set[FullID] = set()
-        self._ready_to_mark_embeds: Dict[ast.NeedsLevel, Set[FullID]] = defaultdict(set)
+        self._topos: dict[FullID, ColoredTopoSorter[str, ast.NeedsLevel]] = {(): topo}
+        self._sizes: dict[FullID, int] = {(): len(graph)}
+        self._metas: dict[FullID, _T] = {(): meta}
+        self._ready: set[FullID] = set()
+        self._done: set[FullID] = set()
+        self._ready_to_mark_embeds: dict[ast.NeedsLevel, set[FullID]] = defaultdict(set)
         self._process_ready(())
 
     @property
@@ -187,7 +174,7 @@ class Graph(Generic[_T]):
     def get_ready(self) -> AbstractSet[FullID]:
         return set(self._ready)
 
-    def get_ready_with_meta(self) -> Iterable[Tuple[FullID, _T]]:
+    def get_ready_with_meta(self) -> Iterable[tuple[FullID, _T]]:
         for ready in set(self._ready):
             yield ready, self._metas[ready[:-1]]
 
@@ -262,13 +249,13 @@ class Graph(Generic[_T]):
 
 class BakeTasksManager:
     def __init__(self) -> None:
-        self._tasks: Dict[FullID, StorageTask] = {}
+        self._tasks: dict[FullID, StorageTask] = {}
 
     @property
     def tasks(self) -> Mapping[FullID, StorageTask]:
         return self._tasks
 
-    def list_unfinished_raw_tasks(self) -> Iterable[Tuple[StorageTask, str]]:
+    def list_unfinished_raw_tasks(self) -> Iterable[tuple[StorageTask, str]]:
         for task in self._tasks.values():
             if not task.status.is_finished and task.raw_id:
                 yield task, task.raw_id
@@ -300,7 +287,7 @@ class BakeTasksManager:
             needs[dep_id] = DepCtx(status, dep.outputs)
         return needs
 
-    def build_state(self, prefix: FullID, state_from: Optional[str]) -> StateCtx:
+    def build_state(self, prefix: FullID, state_from: str | None) -> StateCtx:
         if state_from is None:
             return {}
         full_id = prefix + (state_from,)
@@ -365,27 +352,27 @@ class RetryReadNeuroClient(RetryConfig):
         *,
         image: RemoteImage,
         preset_name: str,
-        entrypoint: Optional[str] = None,
-        command: Optional[str] = None,
-        working_dir: Optional[str] = None,
-        http: Optional[HTTPPort] = None,
-        env: Optional[Mapping[str, str]] = None,
+        entrypoint: str | None = None,
+        command: str | None = None,
+        working_dir: str | None = None,
+        http: HTTPPort | None = None,
+        env: Mapping[str, str] | None = None,
         volumes: Sequence[Volume] = (),
-        secret_env: Optional[Mapping[str, URL]] = None,
+        secret_env: Mapping[str, URL] | None = None,
         secret_files: Sequence[SecretFile] = (),
         disk_volumes: Sequence[DiskVolume] = (),
         tty: bool = False,
         shm: bool = False,
-        name: Optional[str] = None,
+        name: str | None = None,
         tags: Sequence[str] = (),
-        description: Optional[str] = None,
+        description: str | None = None,
         pass_config: bool = False,
         wait_for_jobs_quota: bool = False,
-        schedule_timeout: Optional[float] = None,
+        schedule_timeout: float | None = None,
         restart_policy: JobRestartPolicy = JobRestartPolicy.NEVER,
-        life_span: Optional[float] = None,
+        life_span: float | None = None,
         privileged: bool = False,
-        project_name: Optional[str] = None,
+        project_name: str | None = None,
     ) -> JobDescription:
         return await self._client.jobs.start(
             image=image,
@@ -445,7 +432,7 @@ class RetryReadNeuroClient(RetryConfig):
                         processed_bytes += chunk_len
                         left = processed_bytes
                 return
-        assert False, "Unreachable"
+        raise AssertionError("Unreachable")
 
     async def job_kill(self, raw_id: str) -> None:
         await self._client.jobs.kill(raw_id)
@@ -484,8 +471,8 @@ class BatchExecutor:
         bake_storage: BakeStorage,
         project_storage: ProjectStorage,
         *,
-        polling_timeout: Optional[float] = 1,
-        project_role: Optional[str] = None,
+        polling_timeout: float | None = 1,
+        project_role: str | None = None,
     ) -> None:
         self._progress = Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -519,7 +506,7 @@ class BatchExecutor:
         # too long timeout makes the waiting longer than expected
         # The missing events subsystem would be great for this task :)
         self._polling_timeout = polling_timeout
-        self._bars: Dict[FullID, TaskID] = {}
+        self._bars: dict[FullID, TaskID] = {}
 
     @classmethod
     @asynccontextmanager
@@ -530,8 +517,8 @@ class BatchExecutor:
         client: Client,
         storage: Storage,
         *,
-        polling_timeout: Optional[float] = 1,
-        project_role: Optional[str] = None,
+        polling_timeout: float | None = 1,
+        project_role: str | None = None,
     ) -> AsyncIterator["BatchExecutor"]:
         storage = storage.with_retry_read()
 
@@ -621,9 +608,9 @@ class BatchExecutor:
         )
         return await flow.get_action(tid, needs=needs)
 
-    async def _get_image(self, bake_image: BakeImage) -> Optional[ImageCtx]:
+    async def _get_image(self, bake_image: BakeImage) -> ImageCtx | None:
         actions = []
-        full_id_to_image: Dict[FullID, ImageCtx] = {}
+        full_id_to_image: dict[FullID, ImageCtx] = {}
         for yaml_def in bake_image.yaml_defs:
             *prefix, image_id = yaml_def
             actions.append(".".join(prefix))
@@ -674,7 +661,7 @@ class BatchExecutor:
         self._bars[full_id] = task_id
 
     def _advance_progress_bar(
-        self, old_task: Optional[StorageTask], task: StorageTask
+        self, old_task: StorageTask | None, task: StorageTask
     ) -> None:
         def _state_to_progress(status: TaskStatus) -> int:
             if status.is_pending:
@@ -724,10 +711,10 @@ class BatchExecutor:
     async def _create_task(
         self,
         yaml_id: FullID,
-        raw_id: Optional[str],
-        status: Union[TaskStatusItem, TaskStatus],
-        outputs: Optional[Mapping[str, str]] = None,
-        state: Optional[Mapping[str, str]] = None,
+        raw_id: str | None,
+        status: TaskStatusItem | TaskStatus,
+        outputs: Mapping[str, str] | None = None,
+        state: Mapping[str, str] | None = None,
     ) -> StorageTask:
         task = await self._storage.create_task(yaml_id, raw_id, status, outputs, state)
         self._advance_progress_bar(None, task)
@@ -740,9 +727,9 @@ class BatchExecutor:
         self,
         yaml_id: FullID,
         *,
-        outputs: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        state: Union[Optional[Mapping[str, str]], Type[_Unset]] = _Unset,
-        new_status: Optional[Union[TaskStatusItem, TaskStatus]] = None,
+        outputs: Mapping[str, str] | type[_Unset] | None = _Unset,
+        state: Mapping[str, str] | type[_Unset] | None = _Unset,
+        new_status: TaskStatusItem | TaskStatus | None = None,
     ) -> StorageTask:
         old_task = self._tasks_mgr.tasks[yaml_id]
         task = await self._storage.task(id=old_task.id).update(
@@ -792,7 +779,7 @@ class BatchExecutor:
                 return
 
         cache_strategy = task.cache.strategy
-        storage_task: Optional[StorageTask] = None
+        storage_task: StorageTask | None = None
         if cache_strategy == ast.CacheStrategy.DEFAULT:
             try:
                 cache_entry = await self._project_storage.cache_entry(
@@ -1094,7 +1081,7 @@ class BatchExecutor:
             return False
         return True
 
-    async def _start_task(self, full_id: FullID, task: Task) -> Optional[StorageTask]:
+    async def _start_task(self, full_id: FullID, task: Task) -> StorageTask | None:
         log.debug(f"BatchExecutor: checking should we build image for {full_id}")
         remote_image = self._client.parse_remote_image(task.image)
         log.debug(f"BatchExecutor: image name is {remote_image}")
@@ -1265,8 +1252,8 @@ class LocalsBatchExecutor(BatchExecutor):
         client: Client,
         storage: Storage,
         *,
-        polling_timeout: Optional[float] = None,
-        project_role: Optional[str] = None,
+        polling_timeout: float | None = None,
+        project_role: str | None = None,
     ) -> AsyncIterator["BatchExecutor"]:
         assert (
             polling_timeout is None
