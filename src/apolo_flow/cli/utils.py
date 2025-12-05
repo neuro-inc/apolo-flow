@@ -43,7 +43,7 @@ def wrap_async(
                 return runner.run(callback(*args, **kwargs))
 
         if pass_obj:
-            wrapper = click.pass_obj(wrapper)  # type: ignore[assignment]
+            wrapper = click.pass_obj(wrapper)  # type: ignore[assignment, arg-type]
 
         return wrapper
 

@@ -62,7 +62,7 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
     ) -> None:
         assert not self._buf, "Missed call feed_eof()"
 
-    async def feed_chunk(self, chunk: bytes) -> AsyncIterator[bytes]:
+    async def feed_chunk(self, chunk: bytes) -> AsyncIterator[bytearray]:
         self._buf.extend(chunk)
         if b"\n" in self._buf:
             lines = self._buf.splitlines(keepends=True)
@@ -72,13 +72,13 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
                 if ret is not None:
                     yield ret
 
-    async def feed_eof(self) -> AsyncIterator[bytes]:
+    async def feed_eof(self) -> AsyncIterator[bytearray]:
         ret = await self.feed_line(self._buf)
         if ret is not None:
             yield ret
         self._buf = bytearray()
 
-    async def feed_line(self, origin_line: bytes) -> bytes | None:
+    async def feed_line(self, origin_line: bytearray) -> bytearray | None:
         line = origin_line.strip()
         if not line.startswith(b"::"):
             return origin_line

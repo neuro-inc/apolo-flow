@@ -215,6 +215,7 @@ class JobsMock:
             pass_config=pass_config,
             privileged=privileged,
             schedule_timeout=schedule_timeout,
+            namespace="default",  # dropme later maybe
         )
         return self._data[job_id]
 
