@@ -84,7 +84,7 @@ def test_expr_validation_invalid_input() -> None:
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10),
+    sys.version_info < (3, 11),
     reason="'MultiCommand' is deprecated and will be removed "
     "in Click 9.0. Use 'Group' instead.",
 )
