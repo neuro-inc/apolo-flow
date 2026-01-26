@@ -57,7 +57,6 @@ from apolo_flow.expr import (
 from apolo_flow.types import AlwaysT, FullID, GitInfo, LocalPath, RemotePath, TaskStatus
 from apolo_flow.utils import collect_git_info
 
-
 log = logging.getLogger(__name__)
 
 

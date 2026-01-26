@@ -91,7 +91,6 @@ from .utils import (
     retry,
 )
 
-
 log = logging.getLogger(__name__)
 
 
@@ -1295,7 +1294,7 @@ class LocalsBatchExecutor(BatchExecutor):
             stderr=asyncio.subprocess.PIPE,
             cwd=self._top_flow.workspace,
         )
-        (stdout_data, stderr_data) = await subprocess.communicate()
+        stdout_data, stderr_data = await subprocess.communicate()
         async with CmdProcessor() as proc:
             async for line in proc.feed_chunk(stdout_data):
                 self._progress.log(line.decode())
