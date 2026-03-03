@@ -1,6 +1,6 @@
 -r base.txt
 -r mypy.txt
-cookiecutter==2.6.0
+cookiecutter==2.7.0
 jsonschema==4.26.0
 pre-commit==4.5.1
 pytest==9.0.2
