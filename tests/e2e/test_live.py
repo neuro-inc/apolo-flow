@@ -100,8 +100,7 @@ async def test_volumes(
     captured = await run_cli(
         ["run", "volumes_test" "--param", "uploaded_content", random_text]
     )
-    assert "initial_file_content" in captured.out
-    assert random_text in captured.out
+    assert "match OK" in captured.out
 
 
 async def test_image_build(

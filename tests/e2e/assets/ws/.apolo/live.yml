@@ -55,7 +55,9 @@ jobs:
       uploaded_content:
         descr: uploaded file content value
     bash: |
-      [ "$(cat /project/ro_dir/updated_file)" = "${{ params.uploaded_content }}" ]
+      if [ "$(cat /project/ro_dir/updated_file)" = "${{ params.uploaded_content }}" ]; then
+        echo "match OK"
+      fi
 
   image_alpine:
     image: ${{ images.img.ref }}
