@@ -97,7 +97,9 @@ async def test_volumes(
     await run_cli(["upload", "ALL"])
     random_text = secrets.token_hex(20)
     (ws / "ro_dir/updated_file").write_text(random_text)
-    captured = await run_cli(["run", "volumes_test"])
+    captured = await run_cli(
+        ["run", "volumes_test" "--param", "uploaded_content", random_text]
+    )
     assert "initial_file_content" in captured.out
     assert random_text in captured.out
 

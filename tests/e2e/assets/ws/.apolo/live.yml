@@ -24,7 +24,6 @@ images:
     context: ${{ flow.workspace }}
     build_preset: cpu-small
 jobs:
-
   job_ctx_full:
     image: ubuntu
     env:
@@ -52,10 +51,11 @@ jobs:
     volumes:
       - ${{ upload(volumes.ro_dir).ref_ro }}
       - ${{ volumes.rw_dir.ref_rw }}
+    params:
+      uploaded_content:
+        descr: uploaded file content value
     bash: |
-      cat /project/ro_dir/updated_file
-      cat /project/rw_dir/initial_file
-      sleep 5  # Fix missing logs in some cases
+      [ "$(cat /project/ro_dir/updated_file)" = "${{ params.uploaded_content }}" ]
 
   image_alpine:
     image: ${{ images.img.ref }}
