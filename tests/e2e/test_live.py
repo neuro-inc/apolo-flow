@@ -41,6 +41,7 @@ async def test_live_context(
             "project_id": project_id,
             "workspace": str(ws),
             "title": "Test live config",
+            "username": username,
         },
         "env": {"FOO": "FOO_ENV"},
         "tags": ["flow:live", f"project:{project_id.replace('_', '-')}"],
