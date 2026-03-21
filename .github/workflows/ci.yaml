@@ -58,7 +58,6 @@ jobs:
 
   unit:
     name: Unit
-    needs: [lint]
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
@@ -119,7 +118,6 @@ jobs:
 
   e2e:
     name: E2E
-    needs: [unit]
     continue-on-error: true
     strategy:
       max-parallel: 2
