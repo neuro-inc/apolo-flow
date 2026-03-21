@@ -98,7 +98,7 @@ async def test_volumes(
     random_text = secrets.token_hex(20)
     (ws / "ro_dir/updated_file").write_text(random_text)
     captured = await run_cli(
-        ["run", "volumes_test" "--param", "uploaded_content", random_text]
+        ["run", "volumes_test", "--param", "uploaded_content", random_text]
     )
     assert "match OK" in captured.out
 
