@@ -196,6 +196,7 @@ class JobsMock:
             owner="test-user",
             cluster_name="default",
             org_name="NO_ORG",
+            namespace="testnamespace",
             project_name=project_name,
             preset_name=preset_name,
             status=JobStatus.PENDING,

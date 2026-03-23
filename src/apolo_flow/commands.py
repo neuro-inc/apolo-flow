@@ -76,12 +76,12 @@ class CmdProcessor(AsyncContextManager["CmdProcessor"]):
             lines = self._buf.splitlines(keepends=True)
             self._buf = lines.pop(-1)
             for line in lines:
-                ret = await self.feed_line(line)
+                ret = await self.feed_line(bytes(line))
                 if ret is not None:
                     yield ret
 
     async def feed_eof(self) -> AsyncIterator[bytes]:
-        ret = await self.feed_line(self._buf)
+        ret = await self.feed_line(bytes(self._buf))
         if ret is not None:
             yield ret
         self._buf = bytearray()

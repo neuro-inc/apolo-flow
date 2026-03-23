@@ -1072,7 +1072,7 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
         task_payload = {
             "attempt_id": attempt_id,
             "yaml_id": _id_to_json(yaml_id),
-            "raw_id": raw_id,
+            "raw_id": raw_id or "",
             "outputs": outputs,
             "state": state,
             "statuses": [

@@ -68,7 +68,9 @@ async def create_project_from_template(
 async def init(root: Root, template: str) -> None:
     """Initialize a flow from a selected template.
 
-    Creates required storage as well.
+    The structure of each flow template could be found at:
+        default: https://github.com/neuro-inc/flow-template
+        barebone: https://github.com/neuro-inc/flow-template-barebone
     """
     await create_project_from_template(
         root,

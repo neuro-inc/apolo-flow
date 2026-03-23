@@ -41,6 +41,7 @@ async def test_live_context(
             "project_id": project_id,
             "workspace": str(ws),
             "title": "Test live config",
+            "username": username,
         },
         "env": {"FOO": "FOO_ENV"},
         "tags": ["flow:live", f"project:{project_id.replace('_', '-')}"],
@@ -96,9 +97,10 @@ async def test_volumes(
     await run_cli(["upload", "ALL"])
     random_text = secrets.token_hex(20)
     (ws / "ro_dir/updated_file").write_text(random_text)
-    captured = await run_cli(["run", "volumes_test"])
-    assert "initial_file_content" in captured.out
-    assert random_text in captured.out
+    captured = await run_cli(
+        ["run", "volumes_test", "--param", "uploaded_content", random_text]
+    )
+    assert "match OK" in captured.out
 
 
 async def test_image_build(
