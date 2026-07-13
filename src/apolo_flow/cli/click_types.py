@@ -14,7 +14,6 @@ from apolo_flow.live_runner import LiveRunner
 from apolo_flow.storage.api import ApiStorage
 from apolo_flow.storage.base import Storage
 
-
 _T = TypeVar("_T")
 
 
