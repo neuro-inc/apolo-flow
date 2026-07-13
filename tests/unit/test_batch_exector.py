@@ -53,7 +53,6 @@ from apolo_flow.storage.base import Storage, Task
 from apolo_flow.storage.in_memory import InMemoryStorage
 from apolo_flow.types import ImageStatus, LocalPath, TaskStatus
 
-
 MakeBatchRunner = Callable[[Path], Awaitable[BatchRunner]]
 
 

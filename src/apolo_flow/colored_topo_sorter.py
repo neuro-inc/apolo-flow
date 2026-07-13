@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import AbstractSet, Dict, Generic, Mapping, Set, TypeVar
 
-
 _K = TypeVar("_K")
 _T = TypeVar("_T")
 

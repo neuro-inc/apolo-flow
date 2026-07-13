@@ -10,7 +10,6 @@ from typing import Annotated, Any, Literal
 
 from apolo_flow import ast
 
-
 LiteralT = int | float | str | bool
 
 EXPR = Annotated[str, Field(pattern=r"^\$\{\{.+\}\}$")]

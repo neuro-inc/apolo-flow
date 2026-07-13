@@ -18,7 +18,6 @@ from apolo_flow.expr import (
 from apolo_flow.tokenizer import Pos, tokenize
 from apolo_flow.types import LocalPath, TaskStatus
 
-
 FNAME = LocalPath("<test>")
 START: Final = Pos(0, 0, FNAME)
 

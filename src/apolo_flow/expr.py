@@ -56,7 +56,6 @@ from .tokenizer import Pos, Token, tokenize
 from .types import AlwaysT, LocalPath, RemotePath, TaskStatus
 from .utils import run_subproc
 
-
 LiteralT = Union[None, bool, int, float, str]
 
 TypeT = Union[
