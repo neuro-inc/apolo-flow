@@ -12,6 +12,7 @@
   * [Actions syntax](workflow-syntax/actions-syntax/README.md)
     * [Actions contexts](workflow-syntax/actions-syntax/live-actions-contexts.md)
 * [CLI reference](cli.md)
+* [Programmatic API](programmatic-api.md)
 * [Expression functions](expression-functions.md)
 * [Mixins](mixins.md)
 * [Modules](modules.md)
