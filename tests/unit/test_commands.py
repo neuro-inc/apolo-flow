@@ -23,10 +23,12 @@ async def test_no_commands() -> None:
 
     assert proc.outputs == {}
     assert proc.states == {}
-    assert b"".join(out).decode("utf-8") == dedent("""\
+    assert b"".join(out).decode("utf-8") == dedent(
+        """\
         123
         3456
-        78""")
+        78"""
+    )
 
 
 async def test_set_output1() -> None:
@@ -117,7 +119,9 @@ async def test_stop_commands() -> None:
 
     assert proc.outputs == {}
     assert proc.states == {"key2": "value2"}
-    assert b"".join(out).decode("utf-8") == dedent("""\
+    assert b"".join(out).decode("utf-8") == dedent(
+        """\
         ::save-state name=key1::value1
         Just a line
-    """)
+    """
+    )

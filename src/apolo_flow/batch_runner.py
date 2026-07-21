@@ -68,6 +68,7 @@ from .utils import (
     make_cmd_exec,
 )
 
+
 EXECUTOR_IMAGE = f"ghcr.io/neuro-inc/apolo-flow:{apolo_flow.__version__}"
 
 

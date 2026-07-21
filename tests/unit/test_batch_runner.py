@@ -24,6 +24,7 @@ from apolo_flow.parser import ConfigDir
 from apolo_flow.storage.base import BakeImage, BakeMeta, Storage
 from apolo_flow.storage.in_memory import InMemoryStorage
 
+
 BatchClFactory = Callable[[str], AsyncContextManager[ConfigLoader]]
 
 
@@ -162,7 +163,8 @@ async def test_check_image_refs_unique(batch_cl_factory: BatchClFactory) -> None
 
     assert isinstance(inner_err, ImageRefNotUniqueError)
     ws = cl.workspace
-    assert str(inner_err) == textwrap.dedent(f"""\
+    assert str(inner_err) == textwrap.dedent(
+        f"""\
         Image with ref 'image:banana1' defined multiple times with different attributes:
         at "{ws / "duplicate_ref.yml"}", line 4, column 5 with params:
           context: {ws / "dir"}
@@ -170,7 +172,8 @@ async def test_check_image_refs_unique(batch_cl_factory: BatchClFactory) -> None
         at "{ws / "subdir/action.yml"}", line 10, column 5 with params:
           context: {ws / "subdir"}
           dockerfile: {ws / "subdir/Dockerfile"}
-    """.rstrip())
+    """.rstrip()
+    )
 
 
 async def test_check_image_refs_unique_same_defs(

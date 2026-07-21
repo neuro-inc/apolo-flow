@@ -30,6 +30,7 @@ from apolo_flow.expr import (
 from apolo_flow.tokenizer import Pos
 from apolo_flow.types import LocalPath, RemotePath
 
+
 POS = Pos(0, 0, LocalPath(__file__))
 
 

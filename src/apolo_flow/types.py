@@ -4,6 +4,7 @@ import enum
 from pathlib import Path, PurePosixPath
 from typing import ClassVar, List, Sequence, Tuple
 
+
 LocalPath = Path
 RemotePath = PurePosixPath
 FullID = Tuple[str, ...]

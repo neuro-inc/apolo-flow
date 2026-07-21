@@ -24,6 +24,7 @@ from apolo_flow.expr import (
 from apolo_flow.tokenizer import Pos, tokenize
 from apolo_flow.types import LocalPath
 
+
 FNAME = LocalPath("<test>")
 START: Final = Pos(0, 0, FNAME)
 
@@ -424,26 +425,30 @@ def test_operator_parse_brackets() -> None:
 
 
 def test_corner_case1() -> None:
-    s = dedent("""\
+    s = dedent(
+        """\
             jupyter notebook
               --no-browser
               --ip=0.0.0.0
               --allow-root
               --NotebookApp.token=
               --notebook-dir=${{ volumes.notebooks.mount }}
-        """)
+        """
+    )
     assert (
         [
             Text(
                 Pos(0, 0, FNAME),
                 Pos(5, 17, FNAME),
-                dedent("""\
+                dedent(
+                    """\
                             jupyter notebook
                               --no-browser
                               --ip=0.0.0.0
                               --allow-root
                               --NotebookApp.token=
-                              --notebook-dir="""),
+                              --notebook-dir="""
+                ),
             ),
             Lookup(
                 Pos(5, 21, FNAME),
@@ -461,11 +466,13 @@ def test_corner_case1() -> None:
 
 
 def test_corner_case2() -> None:
-    s = dedent("""\
+    s = dedent(
+        """\
             bash -c 'cd ${{ volumes.project.mount }} &&
               python -u ${{ volumes.code.mount }}/train.py
                 --data ${{ volumes.data.mount }}'
-        """)
+        """
+    )
     assert [
         Text(Pos(0, 0, FNAME), Pos(0, 12, FNAME), "bash -c 'cd "),
         Lookup(
