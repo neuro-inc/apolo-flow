@@ -18,4 +18,4 @@
 * [Actions contexts](reference/live-actions-contexts.md)
 * [Batch workflow commands](reference/batch-workflow-commands.md)
 * [CLI reference](reference/cli.md)
-
+* [Programmatic API](reference/programmatic-api.md)
