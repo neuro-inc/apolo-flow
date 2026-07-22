@@ -161,9 +161,16 @@ jobs:
   check: # This job does nothing and is only used for the branch protection
     name: Check
     needs: [lint, unit, e2e]
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Check
+        if: ${{ needs.lint.result != 'success' || needs.unit.result != 'success' }}
+        run: |
+          echo "lint result: ${{ needs.lint.result }}"
+          echo "unit result: ${{ needs.unit.result }}"
+          exit 1
+      - name: Success
         run: |
           echo "All checks have passed"
 
