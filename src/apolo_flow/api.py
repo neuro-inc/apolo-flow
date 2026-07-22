@@ -7,13 +7,18 @@ runner adapters, while the supplied adapters never inspect or parse console outp
 
 import dataclasses
 
+import apolo_sdk
 import asyncio
 import datetime
 import re
 import secrets
+import shutil
+import tempfile
 from apolo_sdk import JobStatus, ResourceNotFound
 from collections.abc import Awaitable
+from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
+from rich.console import Console
 from time import monotonic
 from typing import (
     AbstractSet,
@@ -26,7 +31,10 @@ from typing import (
 )
 
 from .batch_runner import BatchRunner
+from .cli.root import Root
 from .live_runner import JobInfo, LiveRunner
+from .parser import find_workspace
+from .storage.api import ApiStorage
 from .storage.base import Attempt, Bake, ProjectStorage, Task
 from .types import TaskStatus
 
@@ -768,3 +776,65 @@ class FlowAPI:
         else:
             truncated = True
         return LogResult(raw_id, bytes(data), chunks, truncated)
+
+
+@asynccontextmanager
+async def open_flow_api(
+    *,
+    cluster: str,
+    org: str,
+    project: str,
+    allowed_workspace_root: Path,
+    config_path: Path,
+    project_path: Path,
+) -> AsyncIterator[FlowAPI]:
+    """Open a fully initialized :class:`FlowAPI` for an explicit context.
+
+    The SDK configuration is copied to a private temporary directory before its
+    context is selected.  Consequently the caller's saved SDK context is never
+    changed, including when initialization or cleanup fails.
+    """
+
+    workspace_root = allowed_workspace_root.resolve(strict=True)
+    resolved_project_path = project_path.resolve(strict=True)
+    try:
+        resolved_project_path.relative_to(workspace_root)
+    except ValueError as exc:
+        raise PathOutsideWorkspace(
+            f"{resolved_project_path} is outside allowed workspace {workspace_root}"
+        ) from exc
+
+    config_dir = find_workspace(resolved_project_path)
+    source_config = config_path.resolve(strict=True)
+    if not source_config.is_dir():
+        raise ValueError(f"{source_config} should be an SDK config directory")
+
+    with tempfile.TemporaryDirectory(prefix="apolo-flow-api-") as tmp:
+        private_config = Path(tmp) / "config"
+        shutil.copytree(source_config, private_config)
+        async with AsyncExitStack() as stack:
+            client = await stack.enter_async_context(apolo_sdk.get(path=private_config))
+            await client.config.switch_cluster(cluster)
+            await client.config.switch_org(org)
+            await client.config.switch_project(project)
+
+            storage = await stack.enter_async_context(ApiStorage(client))
+            root = Root(
+                config_dir=config_dir,
+                console=Console(quiet=True),
+                verbosity=0,
+                show_traceback=False,
+            )
+            live_runner = await stack.enter_async_context(
+                LiveRunner(config_dir, root.console, client, storage, root)
+            )
+            batch_runner = await stack.enter_async_context(
+                BatchRunner(config_dir, root.console, client, storage, root)
+            )
+            yield FlowAPI(
+                allowed_workspace_root=workspace_root,
+                config_path=config_dir.config_dir,
+                project_path=resolved_project_path,
+                live=DefaultLiveRunnerAdapter(live_runner),
+                batch=DefaultBatchRunnerAdapter(batch_runner),
+            )

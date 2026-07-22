@@ -23,6 +23,7 @@ from apolo_flow.api import (
     LiveRunnerAdapter,
     OperationTimeout,
     PathOutsideWorkspace,
+    open_flow_api,
 )
 from apolo_flow.live_runner import JobInfo
 from apolo_flow.storage.base import (
@@ -292,6 +293,126 @@ def test_rejects_path_escape(tmp_path: Path) -> None:
             live=live,
             batch=cast(BatchRunnerAdapter, batch),
         )
+
+
+async def test_open_flow_api_initializes_and_closes_without_saving_context(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = tmp_path / "workspace"
+    flow_config = workspace / ".apolo"
+    flow_config.mkdir(parents=True)
+    sdk_config = tmp_path / "sdk"
+    sdk_config.mkdir()
+    saved_context = sdk_config / "context"
+    saved_context.write_text("saved")
+    events: list[str] = []
+    private_config: Optional[Path] = None
+
+    class Config:
+        def __init__(self, path: Path) -> None:
+            self.path = path
+
+        async def switch_cluster(self, value: str) -> None:
+            events.append(f"cluster:{value}")
+            (self.path / "context").write_text(value)
+
+        async def switch_org(self, value: str) -> None:
+            events.append(f"org:{value}")
+
+        async def switch_project(self, value: str) -> None:
+            events.append(f"project:{value}")
+
+    class Resource:
+        def __init__(self, name: str, value: object) -> None:
+            self.name = name
+            self.value = value
+
+        async def __aenter__(self) -> object:
+            events.append(f"enter:{self.name}")
+            return self.value
+
+        async def __aexit__(self, *args: object) -> None:
+            events.append(f"exit:{self.name}")
+
+    class Client:
+        def __init__(self, path: Path) -> None:
+            self.config = Config(path)
+
+    class Runner:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        async def __aenter__(self) -> "Runner":
+            events.append(f"enter:{self.name}")
+            return self
+
+        async def __aexit__(self, *args: object) -> None:
+            events.append(f"exit:{self.name}")
+
+    def get(*, path: Path) -> Resource:
+        nonlocal private_config
+        private_config = path
+        assert (path / "context").read_text() == "saved"
+        return Resource("client", Client(path))
+
+    monkeypatch.setattr("apolo_flow.api.apolo_sdk.get", get)
+    monkeypatch.setattr(
+        "apolo_flow.api.ApiStorage", lambda client: Resource("storage", object())
+    )
+    monkeypatch.setattr("apolo_flow.api.LiveRunner", lambda *args: Runner("live"))
+    monkeypatch.setattr("apolo_flow.api.BatchRunner", lambda *args: Runner("batch"))
+
+    async with open_flow_api(
+        cluster="cluster-a",
+        org="org-a",
+        project="project-a",
+        allowed_workspace_root=workspace,
+        config_path=sdk_config,
+        project_path=workspace,
+    ) as api:
+        assert api.workspace_root == workspace
+        assert api.config_path == flow_config
+        assert private_config is not None and private_config.exists()
+        events.append("yield")
+
+    assert saved_context.read_text() == "saved"
+    assert private_config is not None and not private_config.exists()
+    assert events == [
+        "enter:client",
+        "cluster:cluster-a",
+        "org:org-a",
+        "project:project-a",
+        "enter:storage",
+        "enter:live",
+        "enter:batch",
+        "yield",
+        "exit:batch",
+        "exit:live",
+        "exit:storage",
+        "exit:client",
+    ]
+
+
+async def test_open_flow_api_rejects_project_outside_workspace(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    sdk_config = tmp_path / "sdk"
+    sdk_config.mkdir()
+
+    with pytest.raises(PathOutsideWorkspace):
+        async with open_flow_api(
+            cluster="cluster-a",
+            org="org-a",
+            project="project-a",
+            allowed_workspace_root=workspace,
+            config_path=sdk_config,
+            project_path=outside,
+        ):
+            pass
 
 
 async def test_live_resolution_generated_suffix_and_bounds(tmp_path: Path) -> None:
