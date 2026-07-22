@@ -9,7 +9,6 @@ inputs:
     descr: param 2
     default: value 2
 outputs:
-  needs: [task_1, task_2]
   res1:
     descr: action result 1
     value: ${{ needs.task_1.outputs.task1 }}

@@ -1,4 +1,6 @@
+import logging
 import pathlib
+import pytest
 
 from apolo_flow import ast
 from apolo_flow.expr import (
@@ -21,8 +23,30 @@ from apolo_flow.expr import (
     SimpleOptStrExpr,
     StrExpr,
 )
-from apolo_flow.parser import parse_project_stream
+from apolo_flow.parser import make_default_project, parse_project_stream
 from apolo_flow.tokenizer import Pos
+
+
+def test_parse_deprecated_role(
+    tmp_path: pathlib.Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    config_file = tmp_path / "project.yml"
+    config_file.write_text("id: test_project\nrole: legacy-role\n")
+
+    with caplog.at_level(logging.WARNING):
+        with config_file.open() as stream:
+            project = parse_project_stream(stream)
+
+    assert project.id.pattern == "test_project"
+    assert caplog.messages == [
+        f"`role` is deprecated and ignored, delete it from {config_file}."
+    ]
+
+
+def test_make_default_project() -> None:
+    project = make_default_project("test-project")
+
+    assert project.id.pattern == "test_project"
 
 
 def test_parse_full(assets: pathlib.Path) -> None:

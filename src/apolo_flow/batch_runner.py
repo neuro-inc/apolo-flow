@@ -332,11 +332,6 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
         return self._project.id
 
     @property
-    def project_role(self) -> Optional[str]:
-        assert self._project is not None
-        return self._project.role
-
-    @property
     def project_name(self) -> str:
         assert self._project is not None
         return self._project.project_name
@@ -450,7 +445,6 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
             bake_id,
             self._client,
             self._storage,
-            project_role=self.project_role,
         ) as executor:
             return await executor.run()
 
@@ -502,9 +496,6 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
                 f"--tag=remote_executor",
                 f"--project={flow.project_name}",
             ]
-            project_role = self.project_role
-            if project_role is not None:
-                run_args.append(f"--share={project_role}")
             run_args += [
                 EXECUTOR_IMAGE,
                 "--",
@@ -525,7 +516,6 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
             bake_id,
             self._client,
             self._storage,
-            project_role=self.project_role,
         ) as executor:
             status = await executor.run()
             if status != TaskStatus.SUCCEEDED:

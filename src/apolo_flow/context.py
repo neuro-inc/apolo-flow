@@ -95,7 +95,6 @@ class ProjectCtx:
     id: str
     project_name: str
     owner: Optional[str] = None
-    role: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -728,7 +727,7 @@ def sanitize_name(name: str) -> str:
     # replace non-printable characters with "_"
     if not name.isprintable():
         name = "".join(c if c.isprintable() else "_" for c in name)
-    # ":" is special in role name, replace it with "_"
+    # ":" is special in resource names, replace it with "_"
     name = name.replace(":", "_")
     name = name.replace(" ", "_")  # replace space for readability
     name = re.sub(r"//+", "/", name)  # collapse repeated "/"

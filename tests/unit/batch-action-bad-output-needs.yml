@@ -1,7 +1,6 @@
 kind: batch
 
 outputs:
-  needs: [ task_2_bad_suffix ]
   output_var:
     value: ${{ needs.task_2.outputs.output_var }}
 

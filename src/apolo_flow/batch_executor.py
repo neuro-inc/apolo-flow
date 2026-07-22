@@ -485,7 +485,6 @@ class BatchExecutor:
         project_storage: ProjectStorage,
         *,
         polling_timeout: Optional[float] = 1,
-        project_role: Optional[str] = None,
     ) -> None:
         self._progress = Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -509,7 +508,6 @@ class BatchExecutor:
         )
         self._tasks_mgr = BakeTasksManager()
         self._is_cancelling = False
-        self._project_role = project_role
 
         self._run_builder_job = start_image_build
 
@@ -531,7 +529,6 @@ class BatchExecutor:
         storage: Storage,
         *,
         polling_timeout: Optional[float] = 1,
-        project_role: Optional[str] = None,
     ) -> AsyncIterator["BatchExecutor"]:
         storage = storage.with_retry_read()
 
@@ -560,7 +557,6 @@ class BatchExecutor:
             bake_storage=bake_storage,
             project_storage=storage.project(id=bake.project_id),
             polling_timeout=polling_timeout,
-            project_role=project_role,
         )
         ret._start()
         try:
@@ -1266,7 +1262,6 @@ class LocalsBatchExecutor(BatchExecutor):
         storage: Storage,
         *,
         polling_timeout: Optional[float] = None,
-        project_role: Optional[str] = None,
     ) -> AsyncIterator["BatchExecutor"]:
         assert (
             polling_timeout is None
@@ -1277,7 +1272,6 @@ class LocalsBatchExecutor(BatchExecutor):
             client,
             storage,
             polling_timeout=0,
-            project_role=project_role,
         ) as ret:
             yield ret
 

@@ -33,7 +33,6 @@ async def test_live_context(
         "project": {
             "id": project_id,
             "owner": username,
-            "role": None,
             "project_name": project_name,
         },
         "flow": {

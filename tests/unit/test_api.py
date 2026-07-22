@@ -69,7 +69,6 @@ class FakeLive:
         self,
         job_id: str,
         suffix: Optional[str],
-        args: Optional[tuple[str, ...]],
         params: Mapping[str, str],
     ) -> None:
         await asyncio.sleep(self.write_delay)
@@ -325,7 +324,6 @@ async def test_default_live_adapter_converts_confirmed_remote_failure() -> None:
             self,
             job_id: str,
             suffix: Optional[str],
-            args: Optional[tuple[str, ...]],
             params: Mapping[str, str],
         ) -> None:
             raise SystemExit(7)
@@ -334,7 +332,7 @@ async def test_default_live_adapter_converts_confirmed_remote_failure() -> None:
             return [JobInfo(job_id, JobStatus.FAILED, "job-failed", (), NOW)]
 
     adapter = DefaultLiveRunnerAdapter(cast(Any, Runner()))
-    await adapter.run("worker", None, None, {})
+    await adapter.run("worker", None, {})
 
 
 async def test_default_live_adapter_preserves_unconfirmed_local_exit() -> None:
@@ -343,7 +341,6 @@ async def test_default_live_adapter_preserves_unconfirmed_local_exit() -> None:
             self,
             job_id: str,
             suffix: Optional[str],
-            args: Optional[tuple[str, ...]],
             params: Mapping[str, str],
         ) -> None:
             raise SystemExit(2)
@@ -353,7 +350,7 @@ async def test_default_live_adapter_preserves_unconfirmed_local_exit() -> None:
 
     adapter = DefaultLiveRunnerAdapter(cast(Any, Runner()))
     with pytest.raises(RuntimeError, match="before 'worker' reached terminal"):
-        await adapter.run("worker", None, None, {})
+        await adapter.run("worker", None, {})
 
 
 async def test_default_batch_adapter_converts_confirmed_remote_failure() -> None:

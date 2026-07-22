@@ -1491,7 +1491,6 @@ PROJECT = {
     "id": SimpleIdExpr,
     "project_name": SimpleOptStrExpr,
     "owner": SimpleOptStrExpr,
-    "role": SimpleOptStrExpr,
     "images": None,
     "volumes": None,
     "defaults": None,
@@ -1500,6 +1499,17 @@ PROJECT = {
 
 
 def parse_project_main(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Project:
+    project_fields = []
+    for key_node, value_node in node.value:
+        key = ctor.construct_object(key_node)  # type: ignore[no-untyped-call]
+        if key == "role":
+            log.warning(
+                "`role` is deprecated and ignored, delete it from %s.",
+                key_node.start_mark.name,
+            )
+            continue
+        project_fields.append((key_node, value_node))
+    node.value = project_fields
     ret = parse_dict(
         ctor,
         node,

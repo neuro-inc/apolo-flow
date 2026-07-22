@@ -1320,13 +1320,6 @@ class SimpleOptStrExpr(StrExprMixin, NoExprMixin, Expr[str]):
     pass
 
 
-class RemovedStrExpr(NoExprMixin, StrictExpr[str]):
-    type_name: ClassVar[str] = "str"
-
-    def convert(self, arg: TypeT) -> str:
-        raise ValueError("The field is not suppored anymore, {!r} passed")
-
-
 class IdExprMixin:
     type_name: ClassVar[str] = "id"
 

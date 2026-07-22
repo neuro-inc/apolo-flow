@@ -1,7 +1,7 @@
 id: test_project
 owner: test-owner
 project_name: test-project-name
-role: test-owner/roles/test-role
+# Project configuration.
 images:
   image_a:
     ref: image:banana

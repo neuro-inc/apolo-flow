@@ -16,7 +16,7 @@ Project `id` available as a `${{ project.id }}` or `${{ flow.project_id }}` cont
 
 ## owner
 
-Optional owner name available as a `${{ project.owner }}` context. Shared projects require `owner` or `role`.
+Optional owner name available as a `${{ project.owner }}` context. Shared projects require `owner`.
 
 ## project\_name
 
