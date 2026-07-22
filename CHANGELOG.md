@@ -5,6 +5,26 @@
 
 [comment]: # (towncrier release notes start)
 
+# Apolo Flow 26.7.0 (2026-07-22)
+
+## Features
+
+- Added programatic API wrapper for apolo-flow: machine-readable facade for Flow project. ([#1338](https://github.com/neuro-inc/neuro-flow/issues/1338))
+
+## Bugfixes
+
+- Fix rendering nested subgraphs in batch graph output. ([#910](https://github.com/neuro-inc/neuro-flow/issues/910))
+
+## Deprecations and Removals
+
+- Drop deprecated functionality:
+  * `flow.id` context variable (use `flow.flow_id` instead)
+  * `project.role` from project definition (was no-op field)
+  * `args` command-line argument from *live* mode (use `--params` instead)
+
+  ([#1177](https://github.com/neuro-inc/neuro-flow/issues/1177))
+
+
 # Apolo Flow 24.12.1 (2024-12-16)
 
 ### Features
