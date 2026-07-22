@@ -466,10 +466,6 @@
       "title": "Owner",
       "type": "string"
     },
-    "role": {
-      "title": "Role",
-      "type": "string"
-    },
     "images": {
       "additionalProperties": {
         "$ref": "#/$defs/Image"

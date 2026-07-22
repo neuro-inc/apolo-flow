@@ -467,9 +467,6 @@ class Project(BaseModel, use_enum_values=True, extra="forbid"):
     owner: str | SkipJsonSchema[None] = Field(
         default=None, json_schema_extra=pop_default_from_schema
     )
-    role: str | SkipJsonSchema[None] = Field(
-        default=None, json_schema_extra=pop_default_from_schema
-    )
     images: dict[str, Image] | SkipJsonSchema[None] = Field(
         default=None, json_schema_extra=pop_default_from_schema
     )

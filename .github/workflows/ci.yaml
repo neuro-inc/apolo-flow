@@ -6,17 +6,12 @@ on:
     tags: [v*]
   pull_request:
     branches: [master]
-  pull_request_target:
-    branches: [master]
   schedule:
     - cron: 0 15 * * *
 jobs:
   lint:
     name: Linter
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]') ||
-      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
     timeout-minutes: 5
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -27,18 +22,17 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: 3.13
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/ci.txt
+            requirements/mypy.txt
+            setup.cfg
       - name: Cache pre-commit hooks
         uses: actions/cache@v6
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|3.13|${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Cache PyPI
-        uses: actions/cache@v6
-        with:
-          key: pip-lint-${{ hashFiles('requirements/*.txt') }}
-          path: ~/.cache/pip
-          restore-keys: |
-            pip-lint-
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v4
         with:
@@ -88,17 +82,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-      - name: Cache PyPI
-        uses: actions/cache@v6
-        with:
-          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
-          path: ${{ steps.pip-cache.outputs.dir }}
-          restore-keys: |
-            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/ci.txt
+            requirements/mypy.txt
+            setup.cfg
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v4
         with:
@@ -150,17 +139,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-      - name: Cache PyPI
-        uses: actions/cache@v6
-        with:
-          key: pip-ci-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
-          path: ${{ steps.pip-cache.outputs.dir }}
-          restore-keys: |
-            pip-ci-${{ runner.os }}-${{ matrix.python-version }}-
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/ci.txt
+            requirements/mypy.txt
+            setup.cfg
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v4
         with:
@@ -205,6 +189,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: 3.13
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/ci.txt
+            requirements/mypy.txt
+            setup.cfg
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v4
         with:

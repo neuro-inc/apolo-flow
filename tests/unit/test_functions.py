@@ -217,7 +217,6 @@ async def live_context_factory(assets: pathlib.Path) -> LiveContextFactory:
                 id="test",
                 project_name=client.config.project_name_or_raise,
                 owner=None,
-                role=None,
             ),
             flow=FlowCtx(
                 flow_id="live",

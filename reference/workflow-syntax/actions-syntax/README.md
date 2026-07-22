@@ -107,18 +107,17 @@ The key `output-name` is a string and its value is a map that defines a single o
 
 ### `outputs.<output-name>.value`
 
-**Required.** An expression that calculates the value of an output. Can only access outputs of tasks that are specified in [`outputs.needs`](./#outputs-needs).
+**Required.** An expression that calculates the value of an output. Can access outputs of action tasks through the [`needs` context](../batch-workflow-syntax/batch-contexts.md#needs-context).
 
 **Example:**
 
 ```yaml
 outputs:
-  needs: [last_task]
   name: 
-    value: ${{ needs.last_task.name }}
+    value: ${{ needs.last_task.outputs.name }}
 ```
 
-**Expression contexts:** [`inputs` context](live-actions-contexts.md#inputs-context), [`needs` context](../batch-workflow-syntax/batch-contexts.md#needs-context) with tasks specified in [`outputs.needs`](./#outputs-needs).
+**Expression contexts:** [`inputs` context](live-actions-contexts.md#inputs-context), [`needs` context](../batch-workflow-syntax/batch-contexts.md#needs-context).
 
 ### `outputs.<output-name>.descr`
 

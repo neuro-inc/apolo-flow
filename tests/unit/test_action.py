@@ -146,7 +146,7 @@ def test_parse_batch_action(assets: LocalPath) -> None:
     action = parse_action(config_file)
     assert action == ast.BatchAction(
         Pos(0, 0, config_file),
-        Pos(47, 0, config_file),
+        Pos(46, 0, config_file),
         kind=ast.ActionKind.BATCH,
         name=SimpleOptStrExpr(
             Pos(0, 0, config_file),
@@ -220,8 +220,8 @@ def test_parse_batch_action(assets: LocalPath) -> None:
             },
         ),
         cache=ast.Cache(
-            Pos(19, 2, config_file),
-            Pos(21, 0, config_file),
+            Pos(18, 2, config_file),
+            Pos(20, 0, config_file),
             strategy=ast.CacheStrategy.INHERIT,
             life_span=OptTimeDeltaExpr(
                 Pos(0, 0, config_file), Pos(0, 0, config_file), "30m"
@@ -229,8 +229,8 @@ def test_parse_batch_action(assets: LocalPath) -> None:
         ),
         images={
             "image_a": ast.Image(
-                _start=Pos(23, 4, config_file),
-                _end=Pos(39, 0, config_file),
+                _start=Pos(22, 4, config_file),
+                _end=Pos(38, 0, config_file),
                 ref=ImageRefStrExpr(
                     Pos(0, 0, config_file), Pos(0, 0, config_file), "image:banana"
                 ),
@@ -284,8 +284,8 @@ def test_parse_batch_action(assets: LocalPath) -> None:
         },
         tasks=[
             ast.Task(
-                Pos(40, 2, config_file),
-                Pos(44, 0, config_file),
+                Pos(39, 2, config_file),
+                Pos(43, 0, config_file),
                 _specified_fields={"needs", "image", "cmd", "id"},
                 mixins=None,
                 title=OptStrExpr(Pos(0, 0, config_file), Pos(0, 0, config_file), None),
@@ -337,8 +337,8 @@ def test_parse_batch_action(assets: LocalPath) -> None:
                 ),
             ),
             ast.Task(
-                Pos(44, 2, config_file),
-                Pos(47, 0, config_file),
+                Pos(43, 2, config_file),
+                Pos(46, 0, config_file),
                 _specified_fields={"image", "cmd", "id"},
                 mixins=None,
                 title=OptStrExpr(Pos(0, 0, config_file), Pos(0, 0, config_file), None),

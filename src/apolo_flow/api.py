@@ -23,7 +23,6 @@ from typing import (
     Protocol,
     Sequence,
     TypeVar,
-    cast,
 )
 
 from .batch_runner import BatchRunner
@@ -143,7 +142,6 @@ class LiveRunnerAdapter(Protocol):
         self,
         job_id: str,
         suffix: Optional[str],
-        args: Optional[tuple[str, ...]],
         params: Mapping[str, str],
     ) -> None: ...
 
@@ -233,15 +231,10 @@ class DefaultLiveRunnerAdapter:
         self,
         job_id: str,
         suffix: Optional[str],
-        args: Optional[tuple[str, ...]],
         params: Mapping[str, str],
     ) -> None:
-        # LiveRunner's annotation says a one-item tuple although the CLI and
-        # implementation both support an arbitrary argument tuple.
         try:
-            await self._runner.run(
-                job_id, suffix, cast(Optional[tuple[str]], args), params
-            )
+            await self._runner.run(job_id, suffix, params)
         except SystemExit as exc:
             # The legacy runner delegates to the Apolo CLI. A non-zero remote job
             # exit is therefore surfaced as SystemExit even though submission and
@@ -418,7 +411,6 @@ class FlowAPI:
         job_id: str,
         *,
         suffix: Optional[str] = None,
-        args: Optional[tuple[str, ...]] = None,
         params: Optional[Mapping[str, str]] = None,
         timeout: float = DEFAULT_WRITE_TIMEOUT,
     ) -> LiveRunResult:
@@ -431,7 +423,6 @@ class FlowAPI:
             await self._live.run(
                 job_id,
                 resolved_suffix,
-                args,
                 {} if params is None else params,
             )
             jobs = await self.live_get(job_id, resolved_suffix)

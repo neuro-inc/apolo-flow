@@ -51,6 +51,14 @@ def test_all_yamls(yaml_file: Path, schemas: Schemas) -> None:
         raise ExceptionGroup(f"Cannot validate [{yaml_file}]", excs)
 
 
+def test_project_schema_rejects_deprecated_role(schemas: Schemas) -> None:
+    with pytest.raises(ValidationError):
+        validate(
+            instance={"id": "test_project", "role": "legacy-role"},
+            schema=schemas.project,
+        )
+
+
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if "yaml_file" not in metafunc.fixturenames:
         return
