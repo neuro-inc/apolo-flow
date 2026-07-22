@@ -5,9 +5,11 @@ import sys
 import textwrap
 from apolo_sdk import Client
 from contextlib import asynccontextmanager
+from graphviz import Digraph
 from typing import AsyncContextManager, AsyncIterator, Callable, Mapping
 
 from apolo_flow.batch_runner import (
+    BatchRunner,
     ImageRefNotUniqueError,
     build_graphs,
     check_image_refs_unique,
@@ -149,6 +151,42 @@ async def test_early_graph(batch_cl_factory: BatchClFactory) -> None:
                 },
             },
         }
+
+
+async def test_render_graph_with_nested_subgraphs() -> None:
+    class Runner:
+        async def _subgraph(self, *args: object) -> None:
+            await BatchRunner._subgraph(self, *args)  # type: ignore[arg-type]
+
+    graphs = {
+        (): {
+            ("first",): set(),
+            ("second",): {("first",)},
+        },
+        ("first",): {
+            ("first", "nested"): set(),
+        },
+        ("first", "nested"): {
+            ("first", "nested", "leaf"): set(),
+        },
+        ("second",): {
+            ("second", "nested"): set(),
+        },
+        ("second", "nested"): {
+            ("second", "nested", "leaf"): set(),
+        },
+    }
+
+    dot = Digraph("test")
+    dot.attr(compound="true")
+    dot.node_attr = {"style": "filled"}
+
+    await Runner()._subgraph(dot, graphs, (), {}, {})
+
+    assert (
+        '\t"first.nested.leaf" -> "second.nested.leaf" '
+        "[lhead=cluster_second ltail=cluster_first]"
+    ) in dot.source
 
 
 async def test_check_image_refs_unique(batch_cl_factory: BatchClFactory) -> None:
