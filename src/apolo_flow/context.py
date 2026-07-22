@@ -2904,6 +2904,7 @@ def _hash(val: Any) -> str:
 
 def _ctx_default(val: Any) -> Any:
     if not isinstance(val, type) and dataclasses.is_dataclass(val):
+        val = cast(Any, val)
         if hasattr(val, "_client"):
             val = dataclasses.replace(val, _client=None)
         if hasattr(val, "_parent") and hasattr(val._parent, "_client"):

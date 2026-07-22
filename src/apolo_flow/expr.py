@@ -236,7 +236,7 @@ async def fmt(ctx: CallCtx, spec: str, *args: TypeT) -> str:
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj: Any) -> Any:
         if not isinstance(obj, type) and dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
+            return dataclasses.asdict(cast(Any, obj))
         elif isinstance(obj, enum.Enum):
             return obj.value
         elif isinstance(obj, RemotePath):
