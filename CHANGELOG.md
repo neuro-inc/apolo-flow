@@ -5,6 +5,14 @@
 
 [comment]: # (towncrier release notes start)
 
+# Apolo Flow 26.7.1 (2026-07-22)
+
+## Features
+
+- Add a supported async lifecycle factory for constructing `FlowAPI` with an explicit
+  Apolo context without changing the user's saved context.
+
+
 # Apolo Flow 26.7.0 (2026-07-22)
 
 ## Features
