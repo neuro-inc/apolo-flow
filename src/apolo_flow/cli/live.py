@@ -48,7 +48,6 @@ async def ps(
     help="Print run command instead of starting job.",
 )
 @argument("job-id", type=LIVE_JOB)
-@argument("args", nargs=-1)
 @wrap_async()
 async def run(
     root: Root,

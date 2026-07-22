@@ -4,7 +4,6 @@ inputs:
   number:
     descr: Number to check
 outputs:
-  needs: [setup_output]
   result:
     value: ${{ needs.setup_output.outputs.result }}
 tasks:

@@ -398,7 +398,7 @@ For multi-jobs an explicit job suffix can be used with explicit job arguments.
 **Usage:**
 
 ```bash
-apolo-flow run [OPTIONS] JOB_ID [ARGS]...
+apolo-flow run [OPTIONS] JOB_ID
 ```
 
 **Options:**
