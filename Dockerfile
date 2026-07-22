@@ -1,4 +1,4 @@
-FROM python:3.12.0b2-buster as requirements
+FROM python:3.13-bookworm AS requirements
 
 ARG APOLO_FLOW_DIST
 
@@ -11,9 +11,9 @@ ADD ./dist /dist
 RUN pip install --user "/${APOLO_FLOW_DIST}"
 
 
-FROM python:3.12.0b2-buster
+FROM python:3.13-bookworm
 
-LABEL org.opencontainers.image.source = "https://github.com/neuro-inc/neuro-flow"
+LABEL org.opencontainers.image.source="https://github.com/neuro-inc/neuro-flow"
 
 COPY --from=requirements /root/.local /root/.local
 COPY docker.entrypoint.sh /var/lib/apolo/entrypoint.sh
