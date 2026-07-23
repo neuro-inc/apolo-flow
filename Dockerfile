@@ -1,4 +1,4 @@
-FROM python:3.13-bookworm AS requirements
+FROM python:3.14-bookworm AS requirements
 
 ARG APOLO_FLOW_DIST
 
@@ -11,7 +11,7 @@ ADD ./dist /dist
 RUN pip install --user "/${APOLO_FLOW_DIST}"
 
 
-FROM python:3.13-bookworm
+FROM python:3.14-bookworm
 
 LABEL org.opencontainers.image.source="https://github.com/neuro-inc/neuro-flow"
 
