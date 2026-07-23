@@ -9,4 +9,4 @@ pyyaml==6.0.3
 rich==15.0.0
 trafaret==2.1.1
 
-typing-extensions==4.15.0
+typing-extensions==4.16.0
