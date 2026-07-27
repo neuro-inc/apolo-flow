@@ -38,7 +38,6 @@ from .storage.api import ApiStorage
 from .storage.base import Attempt, Bake, ProjectStorage, Task
 from .types import TaskStatus
 
-
 _BAKE_ID_RE = re.compile(
     r"bake-[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}"
 )

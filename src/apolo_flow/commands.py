@@ -18,7 +18,6 @@ from typing import (
     Type,
 )
 
-
 log = logging.getLogger(__name__)
 
 

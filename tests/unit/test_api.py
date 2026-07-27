@@ -36,7 +36,6 @@ from apolo_flow.storage.base import (
 )
 from apolo_flow.types import TaskStatus
 
-
 NOW = datetime.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc)
 
 

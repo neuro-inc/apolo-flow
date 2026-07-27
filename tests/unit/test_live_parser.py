@@ -1042,11 +1042,9 @@ def test_bad_expr_type_before_eval(assets: pathlib.Path) -> None:
     config_file = workspace / "live-bad-expr-type-before-eval.yml"
     with pytest.raises(EvalError) as ctx:
         parse_live(workspace, config_file)
-    assert str(ctx.value) == dedent(
-        f"""\
+    assert str(ctx.value) == dedent(f"""\
         invalid literal for int() with base 10: 'abc def'
-          in "{config_file}", line 6, column 16"""
-    )
+          in "{config_file}", line 6, column 16""")
 
 
 def test_parse_multi(assets: pathlib.Path) -> None:

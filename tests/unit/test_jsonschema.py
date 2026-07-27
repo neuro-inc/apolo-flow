@@ -12,7 +12,6 @@ from typing import Union
 
 import apolo_flow
 
-
 JSON = Union[None, bool, int, float, str, list["JSON"], dict[str, "JSON"]]
 
 
