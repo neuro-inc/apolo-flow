@@ -61,12 +61,14 @@ class JobsMock:
 
     _data: Dict[str, JobDescription]
     _outputs: Dict[str, bytes]
+    _output_delays: Dict[str, int]
     exception_on_status: Optional[BaseException]
 
     def __init__(self) -> None:
         self.id_counter = 0
         self._data = {}
         self._outputs = {}
+        self._output_delays = {}
         self.exception_on_status = None
 
     def _make_next_id(self) -> int:
@@ -110,7 +112,12 @@ class JobsMock:
             descr = replace(descr, history=new_history)
             self._data[descr.id] = descr
 
-    async def mark_done(self, job_id_or_task_name: str, output: bytes = b"") -> None:
+    async def mark_done(
+        self,
+        job_id_or_task_name: str,
+        output: bytes = b"",
+        output_delay: int = 0,
+    ) -> None:
         await self.mark_started(job_id_or_task_name)
         descr = await self.get_task(job_id_or_task_name)
         if descr.status == JobStatus.RUNNING:
@@ -124,6 +131,7 @@ class JobsMock:
             descr = replace(descr, history=new_history)
             self._data[descr.id] = descr
         self._outputs[descr.id] = output
+        self._output_delays[descr.id] = output_delay
 
     async def mark_failed(self, job_id_or_task_name: str, output: bytes = b"") -> None:
         await self.mark_started(job_id_or_task_name)
@@ -143,6 +151,7 @@ class JobsMock:
     def clear(self) -> None:
         self._data = {}
         self._outputs = {}
+        self._output_delays = {}
 
     # Fake Jobs methods
 
@@ -244,6 +253,10 @@ class JobsMock:
             raise ResourceNotFound
 
     async def monitor(self, job_id: str) -> AsyncIterator[bytes]:
+        if self._output_delays.get(job_id, 0):
+            self._output_delays[job_id] -= 1
+            yield b""
+            return
         yield self._outputs.get(job_id, b"")
 
 
@@ -667,7 +680,11 @@ async def test_batch_with_action_ok(
 ) -> None:
     executor_task = asyncio.create_task(run_executor(assets, "batch-action-call"))
     await jobs_mock.get_task("test.task-1")
-    await jobs_mock.mark_done("test.task-1", b"::set-output name=task1::Task 1 val 1")
+    await jobs_mock.mark_done(
+        "test.task-1",
+        b"::set-output name=task1::Task 1 val 1",
+        output_delay=1,
+    )
 
     await jobs_mock.get_task("test.task-2")
     await jobs_mock.mark_done("test.task-2", b"::set-output name=task2::Task 2 value 2")
@@ -1478,7 +1495,7 @@ class TestRetryReadNeuroClientLogs:
         client.jobs = Mock()
 
         async def iterate(_: Any) -> AsyncIterator[bytes]:
-            for item in logs():
+            for item in logs.return_value:
                 if (
                     isinstance(item, type) and issubclass(item, Exception)
                 ) or isinstance(item, Exception):
@@ -1490,7 +1507,6 @@ class TestRetryReadNeuroClientLogs:
         ret.__aiter__ = iterate
         result = RetryReadNeuroClient(client)
         result._delay = 0.01  # default retry delay is 15 sec
-        result._empty_logs_retry_delay = 0
         return result
 
     async def get_logs(self, client: RetryReadNeuroClient) -> bytes:
@@ -1502,27 +1518,6 @@ class TestRetryReadNeuroClientLogs:
     async def test_logs_normal(self, logs: Mock, client: RetryReadNeuroClient) -> None:
         logs.return_value = iter([b"abc", b"de", b"fgij"])
         assert await self.get_logs(client) == b"abcdefgij"
-
-    async def test_logs_retry_when_terminal_job_logs_are_initially_empty(
-        self, logs: Mock, client: RetryReadNeuroClient
-    ) -> None:
-        logs.side_effect = [
-            iter([]),
-            iter([b"::set-output name=result::4 is not prime\n"]),
-        ]
-
-        assert await self.get_logs(client) == (
-            b"::set-output name=result::4 is not prime\n"
-        )
-        assert logs.call_count == 2
-
-    async def test_logs_stop_retrying_when_terminal_job_logs_stay_empty(
-        self, logs: Mock, client: RetryReadNeuroClient
-    ) -> None:
-        logs.side_effect = [iter([]), iter([]), iter([])]
-
-        assert await self.get_logs(client) == b""
-        assert logs.call_count == 3
 
     async def test_logs_skip_first(
         self, logs: Mock, client: RetryReadNeuroClient

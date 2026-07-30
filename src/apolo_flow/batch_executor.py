@@ -359,11 +359,6 @@ class RetryReadNeuroClient(RetryConfig):
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
-        # A job may become terminal before its logs are available through the
-        # logs service.  This is especially visible for very short jobs whose
-        # only output is a workflow command such as ``::set-output``.
-        self._empty_logs_retries = 3
-        self._empty_logs_retry_delay = 1.0
 
     async def job_start(
         self,
@@ -422,7 +417,7 @@ class RetryReadNeuroClient(RetryConfig):
     async def job_status(self, raw_id: str) -> JobDescription:
         return await self._client.jobs.status(raw_id)
 
-    async def _job_logs_once(self, raw_id: str) -> AsyncIterator[bytes]:
+    async def job_logs(self, raw_id: str) -> AsyncIterator[bytes]:
         processed_bytes = 0
         for attempt in retries(
             f"job_logs({raw_id!r})",
@@ -451,21 +446,6 @@ class RetryReadNeuroClient(RetryConfig):
                         left = processed_bytes
                 return
         assert False, "Unreachable"
-
-    async def job_logs(self, raw_id: str) -> AsyncIterator[bytes]:
-        for attempt in range(self._empty_logs_retries):
-            has_logs = False
-            async for chunk in self._job_logs_once(raw_id):
-                has_logs = has_logs or bool(chunk)
-                yield chunk
-            if has_logs:
-                return
-            if attempt + 1 < self._empty_logs_retries:
-                log.debug(
-                    "No logs are available for terminal job %s yet; retrying",
-                    raw_id,
-                )
-                await asyncio.sleep(self._empty_logs_retry_delay)
 
     async def job_kill(self, raw_id: str) -> None:
         await self._client.jobs.kill(raw_id)
@@ -1017,6 +997,59 @@ class BatchExecutor:
             state=task.state,
         )
 
+    async def _collect_job_commands(
+        self, raw_id: str
+    ) -> Tuple[Mapping[str, str], Mapping[str, str]]:
+        async with CmdProcessor() as proc:
+            async for chunk in self._client.job_logs(raw_id):
+                async for line in proc.feed_chunk(chunk):
+                    pass
+            async for line in proc.feed_eof():
+                pass
+        return proc.outputs, proc.states
+
+    async def _refresh_action_task_outputs(self, full_id: FullID) -> None:
+        tasks = [
+            task
+            for task in self._tasks_mgr.tasks.values()
+            if task.raw_id
+            and task.status == TaskStatus.SUCCEEDED
+            and len(task.yaml_id) == len(full_id) + 1
+            and task.yaml_id[: len(full_id)] == full_id
+        ]
+
+        async def collect(
+            task: StorageTask,
+        ) -> Tuple[StorageTask, Mapping[str, str], Mapping[str, str]]:
+            assert task.raw_id
+            outputs, state = await self._collect_job_commands(task.raw_id)
+            return task, outputs, state
+
+        refreshed = await asyncio.gather(*(collect(task) for task in tasks))
+        for task, outputs, state in refreshed:
+            if outputs != task.outputs or state != task.state:
+                await self._update_task(task.yaml_id, outputs=outputs, state=state)
+
+    async def _calc_action_outputs(
+        self, full_id: FullID, ctx: RunningBatchActionFlow
+    ) -> DepCtx:
+        for attempt in range(3):
+            results = self._tasks_mgr.build_needs(full_id, ctx.graph.keys())
+            try:
+                return await ctx.calc_outputs(results)
+            except EvalError as exc:
+                msg = str(exc.args[0]) if exc.args else ""
+                if not msg.startswith(("No attribute ", "No item ")) or attempt == 2:
+                    raise
+                log.debug(
+                    "An action output is not available for %s yet; "
+                    "refreshing task logs",
+                    fmt_id(full_id),
+                )
+                await asyncio.sleep(self._polling_timeout or 1.0)
+                await self._refresh_action_task_outputs(full_id)
+        assert False, "Unreachable"
+
     async def _process_started(self) -> bool:
         log.debug(f"BatchExecutor: processing started")
         # Process tasks
@@ -1042,12 +1075,7 @@ class BatchExecutor:
                 )
             if job_descr.status in TERMINATED_JOB_STATUSES:
                 log.debug(f"BatchExecutor: processing logs for task {task.yaml_id}")
-                async with CmdProcessor() as proc:
-                    async for chunk in self._client.job_logs(raw_id):
-                        async for line in proc.feed_chunk(chunk):
-                            pass
-                    async for line in proc.feed_eof():
-                        pass
+                outputs, state = await self._collect_job_commands(raw_id)
                 log.debug(
                     f"BatchExecutor: finished processing logs for task {task.yaml_id}"
                 )
@@ -1060,8 +1088,8 @@ class BatchExecutor:
                         when=job_descr.history.finished_at,
                         status=TaskStatus(job_descr.status),
                     ),
-                    outputs=proc.outputs,
-                    state=proc.states,
+                    outputs=outputs,
+                    state=state,
                 )
                 await self._store_to_cache(task)
                 task_meta = await self._get_meta(task.yaml_id)
@@ -1076,8 +1104,7 @@ class BatchExecutor:
             log.debug(f"BatchExecutor: marking action {full_id} as done")
             # done action, make it finished
             ctx = await self._get_action(full_id)
-            results = self._tasks_mgr.build_needs(full_id, ctx.graph.keys())
-            res_ctx = await ctx.calc_outputs(results)
+            res_ctx = await self._calc_action_outputs(full_id, ctx)
 
             task = await self._update_task(
                 full_id,
