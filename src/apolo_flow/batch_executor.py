@@ -1033,21 +1033,27 @@ class BatchExecutor:
     async def _calc_action_outputs(
         self, full_id: FullID, ctx: RunningBatchActionFlow
     ) -> DepCtx:
-        for attempt in range(3):
+        max_attempts = 7
+        retry_delay = self._polling_timeout or 1.0
+        for attempt in range(max_attempts):
             results = self._tasks_mgr.build_needs(full_id, ctx.graph.keys())
             try:
                 return await ctx.calc_outputs(results)
             except EvalError as exc:
                 msg = str(exc.args[0]) if exc.args else ""
-                if not msg.startswith(("No attribute ", "No item ")) or attempt == 2:
+                if (
+                    not msg.startswith(("No attribute ", "No item "))
+                    or attempt + 1 == max_attempts
+                ):
                     raise
                 log.debug(
                     "An action output is not available for %s yet; "
                     "refreshing task logs",
                     fmt_id(full_id),
                 )
-                await asyncio.sleep(self._polling_timeout or 1.0)
+                await asyncio.sleep(retry_delay)
                 await self._refresh_action_task_outputs(full_id)
+                retry_delay = min(retry_delay * 2, 8.0)
         assert False, "Unreachable"
 
     async def _process_started(self) -> bool:

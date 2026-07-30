@@ -683,7 +683,7 @@ async def test_batch_with_action_ok(
     await jobs_mock.mark_done(
         "test.task-1",
         b"::set-output name=task1::Task 1 val 1",
-        output_delay=1,
+        output_delay=3,
     )
 
     await jobs_mock.get_task("test.task-2")
