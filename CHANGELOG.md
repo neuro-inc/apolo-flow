@@ -5,6 +5,13 @@
 
 [comment]: # (towncrier release notes start)
 
+# Apolo Flow 26.7.2 (2026-07-30)
+
+## Bugfixes
+
+- Update apolo-cli to 26.7.1 ([#1364](https://github.com/neuro-inc/neuro-flow/issues/1364))
+
+
 # Apolo Flow 26.7.1 (2026-07-22)
 
 ## Features
