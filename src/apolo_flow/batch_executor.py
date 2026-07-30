@@ -359,6 +359,11 @@ class RetryReadNeuroClient(RetryConfig):
     def __init__(self, client: Client) -> None:
         super().__init__()
         self._client = client
+        # A job may become terminal before its logs are available through the
+        # logs service.  This is especially visible for very short jobs whose
+        # only output is a workflow command such as ``::set-output``.
+        self._empty_logs_retries = 3
+        self._empty_logs_retry_delay = 1.0
 
     async def job_start(
         self,
@@ -417,7 +422,7 @@ class RetryReadNeuroClient(RetryConfig):
     async def job_status(self, raw_id: str) -> JobDescription:
         return await self._client.jobs.status(raw_id)
 
-    async def job_logs(self, raw_id: str) -> AsyncIterator[bytes]:
+    async def _job_logs_once(self, raw_id: str) -> AsyncIterator[bytes]:
         processed_bytes = 0
         for attempt in retries(
             f"job_logs({raw_id!r})",
@@ -446,6 +451,21 @@ class RetryReadNeuroClient(RetryConfig):
                         left = processed_bytes
                 return
         assert False, "Unreachable"
+
+    async def job_logs(self, raw_id: str) -> AsyncIterator[bytes]:
+        for attempt in range(self._empty_logs_retries):
+            has_logs = False
+            async for chunk in self._job_logs_once(raw_id):
+                has_logs = has_logs or bool(chunk)
+                yield chunk
+            if has_logs:
+                return
+            if attempt + 1 < self._empty_logs_retries:
+                log.debug(
+                    "No logs are available for terminal job %s yet; retrying",
+                    raw_id,
+                )
+                await asyncio.sleep(self._empty_logs_retry_delay)
 
     async def job_kill(self, raw_id: str) -> None:
         await self._client.jobs.kill(raw_id)

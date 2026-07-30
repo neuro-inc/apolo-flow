@@ -1478,7 +1478,7 @@ class TestRetryReadNeuroClientLogs:
         client.jobs = Mock()
 
         async def iterate(_: Any) -> AsyncIterator[bytes]:
-            for item in logs.return_value:
+            for item in logs():
                 if (
                     isinstance(item, type) and issubclass(item, Exception)
                 ) or isinstance(item, Exception):
@@ -1490,6 +1490,7 @@ class TestRetryReadNeuroClientLogs:
         ret.__aiter__ = iterate
         result = RetryReadNeuroClient(client)
         result._delay = 0.01  # default retry delay is 15 sec
+        result._empty_logs_retry_delay = 0
         return result
 
     async def get_logs(self, client: RetryReadNeuroClient) -> bytes:
@@ -1501,6 +1502,27 @@ class TestRetryReadNeuroClientLogs:
     async def test_logs_normal(self, logs: Mock, client: RetryReadNeuroClient) -> None:
         logs.return_value = iter([b"abc", b"de", b"fgij"])
         assert await self.get_logs(client) == b"abcdefgij"
+
+    async def test_logs_retry_when_terminal_job_logs_are_initially_empty(
+        self, logs: Mock, client: RetryReadNeuroClient
+    ) -> None:
+        logs.side_effect = [
+            iter([]),
+            iter([b"::set-output name=result::4 is not prime\n"]),
+        ]
+
+        assert await self.get_logs(client) == (
+            b"::set-output name=result::4 is not prime\n"
+        )
+        assert logs.call_count == 2
+
+    async def test_logs_stop_retrying_when_terminal_job_logs_stay_empty(
+        self, logs: Mock, client: RetryReadNeuroClient
+    ) -> None:
+        logs.side_effect = [iter([]), iter([]), iter([])]
+
+        assert await self.get_logs(client) == b""
+        assert logs.call_count == 3
 
     async def test_logs_skip_first(
         self, logs: Mock, client: RetryReadNeuroClient
