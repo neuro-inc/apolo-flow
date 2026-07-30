@@ -1,7 +1,5 @@
-import dataclasses
-from dataclasses import dataclass, fields, replace
-
 import collections
+import dataclasses
 import enum
 import hashlib
 import itertools
@@ -9,8 +7,8 @@ import json
 import logging
 import re
 from abc import ABC, abstractmethod
-from apolo_sdk import Client
 from contextlib import asynccontextmanager
+from dataclasses import dataclass, fields, replace
 from datetime import timedelta
 from functools import lru_cache
 from typing import (
@@ -31,6 +29,8 @@ from typing import (
     Union,
     cast,
 )
+
+from apolo_sdk import Client
 from typing_extensions import Annotated, Protocol
 from yarl import URL
 
@@ -54,7 +54,6 @@ from apolo_flow.expr import (
 )
 from apolo_flow.types import AlwaysT, FullID, GitInfo, LocalPath, RemotePath, TaskStatus
 from apolo_flow.utils import collect_git_info
-
 
 log = logging.getLogger(__name__)
 
@@ -215,9 +214,9 @@ class DepCtx:
     outputs: Mapping[str, str]
 
     def __post_init__(self) -> None:
-        assert (
-            self.result != TaskStatus.CACHED
-        ), "CACHED status should replaced with SUCCEEDED for expressions"
+        assert self.result != TaskStatus.CACHED, (
+            "CACHED status should replaced with SUCCEEDED for expressions"
+        )
 
 
 @dataclass(frozen=True)
@@ -1414,9 +1413,9 @@ class RunningLiveFlow:
         )
 
     async def get_job(self, job_id: str, params: Mapping[str, str]) -> Job:
-        assert not await self.is_multi(
-            job_id
-        ), "Use get_multi_job() for multi jobs instead of get_job()"
+        assert not await self.is_multi(job_id), (
+            "Use get_multi_job() for multi jobs instead of get_job()"
+        )
         job_ast = await self._get_job_ast(job_id)
         ctx = self._ctx.to_job_ctx(
             params=await setup_params_ctx(self._ctx, params, job_ast.params)
@@ -1429,9 +1428,9 @@ class RunningLiveFlow:
         suffix: str,
         params: Mapping[str, str],
     ) -> Job:
-        assert await self.is_multi(
-            job_id
-        ), "Use get_job() for not multi jobs instead of get_multi_job()"
+        assert await self.is_multi(job_id), (
+            "Use get_job() for not multi jobs instead of get_multi_job()"
+        )
 
         job_ast = await self._get_job_ast(job_id)
         ctx = self._ctx.to_multi_job_ctx(
@@ -1700,9 +1699,9 @@ class EarlyBatch:
         return errors
 
     async def get_action_early(self, real_id: str) -> "EarlyBatchAction":
-        assert await self.is_action(
-            real_id
-        ), f"get_action_early() cannot be used for task {real_id}"
+        assert await self.is_action(real_id), (
+            f"get_action_early() cannot be used for task {real_id}"
+        )
         prep_task = cast(
             Union[EarlyBatchCall, EarlyModuleCall], self._get_prep(real_id)
         )  # Already checked
@@ -1742,9 +1741,9 @@ class EarlyBatch:
         )
 
     async def get_local_early(self, real_id: str) -> "EarlyLocalCall":
-        assert await self.is_local(
-            real_id
-        ), f"get_local_early() cannot used for action call {real_id}"
+        assert await self.is_local(real_id), (
+            f"get_local_early() cannot used for action call {real_id}"
+        )
         prep_task = self._get_prep(real_id)
         assert isinstance(prep_task, EarlyLocalCall)  # Already checked
         return prep_task
@@ -1886,9 +1885,9 @@ class RunningBatchBase(Generic[_T], EarlyBatch, ABC):
     async def get_task(
         self, prefix: FullID, real_id: str, needs: NeedsCtx, state: StateCtx
     ) -> Task:
-        assert await self.is_task(
-            real_id
-        ), f"get_task() cannot be used for tasks action call with id {real_id}"
+        assert await self.is_task(real_id), (
+            f"get_task() cannot be used for tasks action call with id {real_id}"
+        )
         prep_task = self._get_prep(real_id)
         assert isinstance(prep_task, (PrepTask, PrepStatefulCall))  # Already checked
 
@@ -1990,9 +1989,9 @@ class RunningBatchBase(Generic[_T], EarlyBatch, ABC):
     async def get_action(
         self, real_id: str, needs: NeedsCtx
     ) -> "RunningBatchActionFlow":
-        assert await self.is_action(
-            real_id
-        ), f"get_task() cannot used for action call {real_id}"
+        assert await self.is_action(real_id), (
+            f"get_task() cannot used for action call {real_id}"
+        )
         prep_task = cast(
             Union[PrepBatchCall, PrepModuleCall], self._get_prep(real_id)
         )  # Already checked
@@ -2028,9 +2027,9 @@ class RunningBatchBase(Generic[_T], EarlyBatch, ABC):
         )
 
     async def get_local(self, real_id: str, needs: NeedsCtx) -> LocalTask:
-        assert await self.is_local(
-            real_id
-        ), f"get_task() cannot used for action call {real_id}"
+        assert await self.is_local(real_id), (
+            f"get_task() cannot used for action call {real_id}"
+        )
         prep_task = self._get_prep(real_id)
         assert isinstance(prep_task, PrepLocalCall)  # Already checked
 

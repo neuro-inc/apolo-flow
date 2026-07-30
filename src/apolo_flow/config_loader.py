@@ -1,15 +1,15 @@
-import dataclasses
-
 import abc
 import asyncio
+import dataclasses
 import logging
-from apolo_sdk import Client
 from contextlib import asynccontextmanager, suppress
 from io import StringIO, TextIOWrapper
 from pathlib import PureWindowsPath
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 from typing import Any, AsyncIterator, Dict, Optional, Sequence, TextIO, Union
+
+from apolo_sdk import Client
 
 from apolo_flow import ast
 from apolo_flow.parser import (
@@ -22,7 +22,6 @@ from apolo_flow.parser import (
 )
 from apolo_flow.storage.base import BakeStorage, ConfigsMeta
 from apolo_flow.types import LocalPath
-
 
 log = logging.getLogger(__name__)
 
@@ -226,7 +225,7 @@ class LocalCL(StreamCL, abc.ABC):
                     raise ValueError(f"Flow {ret} is not a file")
                 return ret
         raise ValueError(
-            f"Config file for flow '{name}' not found " f"in {self._config_dir} folder"
+            f"Config file for flow '{name}' not found in {self._config_dir} folder"
         )
 
     @asynccontextmanager

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import dataclasses
-
 from typing import AbstractSet, Type
 
 from apolo_flow import ast, expr

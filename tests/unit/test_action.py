@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import ANY
+
+import pytest
 
 from apolo_flow import ast
 from apolo_flow.ast import BatchActionOutputs

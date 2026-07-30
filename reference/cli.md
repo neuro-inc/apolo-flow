@@ -266,7 +266,7 @@ The structure of each flow template could be found at:     default: https://gith
 **Usage:**
 
 ```bash
-apolo-flow init [OPTIONS] [[barebone|default]]
+apolo-flow init [OPTIONS] [barebone|default]
 ```
 
 **Options:**

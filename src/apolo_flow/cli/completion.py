@@ -1,12 +1,12 @@
-import click
 import os
 import sys
+
+import click
 
 from apolo_flow.cli.utils import wrap_async
 from apolo_flow.types import LocalPath
 
 from .root import Root
-
 
 CFG_FILE = {"bash": LocalPath("~/.bashrc"), "zsh": LocalPath("~/.zshrc")}
 SOURCE_CMD = {"bash": "bash_source", "zsh": "zsh_source"}

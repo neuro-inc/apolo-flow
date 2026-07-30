@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-
 import asyncio
-import click
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
+
+import click
 
 from apolo_flow.cli.utils import wrap_async
 

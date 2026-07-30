@@ -1,15 +1,9 @@
-import dataclasses
-
 import asyncio
-import click
+import dataclasses
 import datetime
 import secrets
 import shlex
 import sys
-from apolo_sdk import Client, JobDescription, JobStatus, ResourceNotFound
-from rich import box
-from rich.console import Console
-from rich.table import Table
 from types import TracebackType
 from typing import (
     AbstractSet,
@@ -21,6 +15,12 @@ from typing import (
     Optional,
     Type,
 )
+
+import click
+from apolo_sdk import Client, JobDescription, JobStatus, ResourceNotFound
+from rich import box
+from rich.console import Console
+from rich.table import Table
 
 from .config_loader import LiveLocalCL
 from .context import ImageCtx, JobMeta, RunningLiveFlow, UnknownJob, VolumeCtx
@@ -324,12 +324,12 @@ class LiveRunner(AsyncContextManager["LiveRunner"]):
                 descr = jobs[0]
                 if descr.status == JobStatus.PENDING:
                     self._console.print(
-                        f"Job [b]{job_id}[/b] is pending, " "try again later"
+                        f"Job [b]{job_id}[/b] is pending, try again later"
                     )
                     sys.exit(2)
                 if descr.status == JobStatus.RUNNING:
                     self._console.print(
-                        f"Job [b]{job_id}[/b] is running, " "connecting..."
+                        f"Job [b]{job_id}[/b] is running, connecting..."
                     )
                     if not is_multi:
                         job = await self.flow.get_job(job_id, params)

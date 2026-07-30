@@ -1,11 +1,12 @@
-import click
 import logging
 import sys
+from datetime import datetime
+from typing import Any, List, Optional
+
+import click
 from apolo_cli.log_formatter import ConsoleHandler
 from click.exceptions import Abort as ClickAbort, Exit as ClickExit
-from datetime import datetime
 from rich.console import Console
-from typing import Any, List, Optional
 
 import apolo_flow
 from apolo_flow.cli import batch, completion, file_logging, flow, images, live, storage
@@ -15,7 +16,6 @@ from apolo_flow.types import LocalPath, TaskStatus
 from ..batch_runner import BakeFailedError
 from ..expr import MultiError
 from .root import Root
-
 
 log = logging.getLogger(__name__)
 

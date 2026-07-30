@@ -1,10 +1,11 @@
 import pathlib
-import pytest
-from apolo_sdk import Client
 from datetime import timedelta
 from textwrap import dedent
 from typing import AsyncIterator, Mapping, Optional, Tuple, Union
 from unittest.mock import ANY, PropertyMock
+
+import pytest
+from apolo_sdk import Client
 from yarl import URL
 
 from apolo_flow import ast
@@ -288,11 +289,9 @@ async def test_bad_expr_type_after_eval(live_config_loader: ConfigLoader) -> Non
     with pytest.raises(EvalError) as cm:
         await flow.get_job("test", {})
     config_file = live_config_loader.workspace / "live-bad-expr-type-after-eval.yml"
-    assert str(cm.value) == dedent(
-        f"""\
+    assert str(cm.value) == dedent(f"""\
         invalid literal for int() with base 10: 'abc def'
-          in "{config_file}", line 6, column 20"""
-    )
+          in "{config_file}", line 6, column 20""")
 
 
 async def test_pipeline_minimal_ctx(batch_config_loader: ConfigLoader) -> None:

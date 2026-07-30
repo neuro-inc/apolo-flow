@@ -1,5 +1,6 @@
 import logging
 import pathlib
+
 import pytest
 
 from apolo_flow import ast

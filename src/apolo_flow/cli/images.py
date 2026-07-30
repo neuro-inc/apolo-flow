@@ -1,6 +1,7 @@
+from contextlib import AsyncExitStack
+
 import apolo_sdk
 import click
-from contextlib import AsyncExitStack
 
 from apolo_flow.cli.click_types import LIVE_IMAGE_OR_ALL
 from apolo_flow.cli.root import Root

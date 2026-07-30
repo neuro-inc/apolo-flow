@@ -5,12 +5,10 @@
 # Defaults are evaluated by the separate processing step.
 
 
-import dataclasses
-
 import abc
+import dataclasses
 import enum
 import logging
-import yaml
 from typing import (
     Any,
     Callable,
@@ -26,6 +24,8 @@ from typing import (
     Union,
     cast,
 )
+
+import yaml
 from yaml.composer import Composer
 from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.parser import Parser
@@ -75,7 +75,6 @@ from .expr import (
 from .tokenizer import Pos
 from .types import LocalPath
 
-
 log = logging.getLogger(__name__)
 
 
@@ -97,7 +96,7 @@ class ConfigPath:
 
 class BaseConstructor(SafeConstructor):
     def construct_id(self, node: yaml.Node) -> str:
-        val = self.construct_object(node)  # type: ignore[no-untyped-call]
+        val = self.construct_object(node)
         if not isinstance(val, str):
             raise ConstructorError(
                 None, None, f"expected a str, found {type(val)}", node.start_mark
@@ -153,7 +152,7 @@ class SimpleSeq(SimpleCompound[_T, Sequence[Expr[_T]]]):
         ret = []
         for child in node.value:
             self.check_scalar(ctor, child)
-            val = ctor.construct_object(child)  # type: ignore[no-untyped-call]
+            val = ctor.construct_object(child)
             # check if scalar
             # if val is not None:
             #     val = str(val)
@@ -178,9 +177,9 @@ class SimpleMapping(SimpleCompound[_T, Mapping[str, Expr[_T]]]):
             )
         ret = {}
         for k, v in node.value:
-            key = ctor.construct_object(k)  # type: ignore[no-untyped-call]
+            key = ctor.construct_object(k)
             self.check_scalar(ctor, v)
-            tmp = ctor.construct_object(v)  # type: ignore[no-untyped-call]
+            tmp = ctor.construct_object(v)
             if tmp is not None:
                 tmp = str(tmp)
             value = self._factory(mark2pos(v.start_mark), mark2pos(v.end_mark), tmp)
@@ -204,7 +203,7 @@ class IdMapping(SimpleCompound[_T, Mapping[str, Expr[_T]]]):
         for k, v in node.value:
             key = ctor.construct_id(k)
             self.check_scalar(ctor, v)
-            tmp = ctor.construct_object(v)  # type: ignore[no-untyped-call]
+            tmp = ctor.construct_object(v)
             if tmp is not None:
                 tmp = str(tmp)
             value = self._factory(mark2pos(v.start_mark), mark2pos(v.end_mark), tmp)
@@ -223,7 +222,7 @@ class ExprOrSeq(SimpleCompound[_T, BaseExpr[SequenceT]]):
 
     def construct(self, ctor: BaseConstructor, node: yaml.Node) -> BaseExpr[SequenceT]:
         if isinstance(node, yaml.ScalarNode):
-            val = ctor.construct_object(node)  # type: ignore[no-untyped-call]
+            val = ctor.construct_object(node)
             return SequenceExpr(
                 mark2pos(node.start_mark),
                 mark2pos(node.end_mark),
@@ -246,7 +245,7 @@ class ExprOrMapping(SimpleCompound[_T, BaseExpr[MappingT]]):
 
     def construct(self, ctor: BaseConstructor, node: yaml.Node) -> BaseExpr[MappingT]:
         if isinstance(node, yaml.ScalarNode):
-            val = ctor.construct_object(node)  # type: ignore[no-untyped-call]
+            val = ctor.construct_object(node)
             return MappingExpr(
                 mark2pos(node.start_mark),
                 mark2pos(node.end_mark),
@@ -303,7 +302,7 @@ def parse_dict(
 
     data = dict(extra)
     for k, v in node.value:
-        key = ctor.construct_object(k)  # type: ignore[no-untyped-call]
+        key = ctor.construct_object(k)
         if key not in keys:
             raise ConstructorError(
                 f"while constructing a '{ret_name}'",
@@ -316,19 +315,19 @@ def parse_dict(
         value: Any
         if item_ctor is None:
             # Get constructor from tag
-            value = ctor.construct_object(v)  # type: ignore[no-untyped-call]
+            value = ctor.construct_object(v)
         elif isinstance(item_ctor, type) and issubclass(item_ctor, enum.Enum):
-            tmp = str(ctor.construct_object(v))  # type: ignore[no-untyped-call]
+            tmp = str(ctor.construct_object(v))
             value = item_ctor(tmp)
         elif isinstance(item_ctor, ast.Base):
-            assert isinstance(
-                v, ast.Base
-            ), f"[{type(v)}] '{v}' should be ast.Base derived"
+            assert isinstance(v, ast.Base), (
+                f"[{type(v)}] '{v}' should be ast.Base derived"
+            )
             value = v
         elif isinstance(item_ctor, SimpleCompound):
             value = item_ctor.construct(ctor, v)
         elif isinstance(item_ctor, type) and issubclass(item_ctor, Expr):
-            tmp = ctor.construct_object(v)  # type: ignore[no-untyped-call]
+            tmp = ctor.construct_object(v)
             value = item_ctor(mark2pos(v.start_mark), mark2pos(v.end_mark), tmp)
         else:
             raise ConstructorError(
@@ -974,7 +973,7 @@ def parse_params(ctor: BaseConstructor, node: yaml.MappingNode) -> Dict[str, ast
     for k, v in node.value:
         key = ctor.construct_id(k)
         if isinstance(v, yaml.ScalarNode):
-            default = ctor.construct_object(v)  # type: ignore[no-untyped-call]
+            default = ctor.construct_object(v)
             start = mark2pos(v.start_mark)
             end = mark2pos(v.end_mark)
             ret[key] = ast.Param(
@@ -1501,7 +1500,7 @@ PROJECT = {
 def parse_project_main(ctor: BaseConstructor, node: yaml.MappingNode) -> ast.Project:
     project_fields = []
     for key_node, value_node in node.value:
-        key = ctor.construct_object(key_node)  # type: ignore[no-untyped-call]
+        key = ctor.construct_object(key_node)
         if key == "role":
             log.warning(
                 "`role` is deprecated and ignored, delete it from %s.",

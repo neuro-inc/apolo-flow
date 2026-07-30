@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
-import click
 import json
-from apolo_sdk import JobRestartPolicy
 from pathlib import Path
-from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, TypeAdapter
-from pydantic.json_schema import SkipJsonSchema
 from typing import Annotated, Any, Literal
 
-from apolo_flow import ast
+import click
+from apolo_sdk import JobRestartPolicy
+from pydantic import BaseModel, ConfigDict, Discriminator, Field, Tag, TypeAdapter
+from pydantic.json_schema import SkipJsonSchema
 
+from apolo_flow import ast
 
 LiteralT = int | float | str | bool
 

@@ -1,11 +1,12 @@
 import abc
+from contextlib import AsyncExitStack
+from typing import Generic, List, Optional, TypeVar, cast
+
 import apolo_sdk
 import click
 from apolo_cli.asyncio_utils import Runner
 from apolo_sdk import ResourceNotFound
 from click.shell_completion import CompletionItem
-from contextlib import AsyncExitStack
-from typing import Generic, List, Optional, TypeVar, cast
 
 from apolo_flow.batch_runner import BatchRunner
 from apolo_flow.cli.root import Root
@@ -14,11 +15,10 @@ from apolo_flow.live_runner import LiveRunner
 from apolo_flow.storage.api import ApiStorage
 from apolo_flow.storage.base import Storage
 
-
 _T = TypeVar("_T")
 
 
-class AsyncType(click.ParamType, Generic[_T], abc.ABC):
+class AsyncType(click.ParamType[_T], Generic[_T], abc.ABC):
     def convert(
         self,
         value: str,

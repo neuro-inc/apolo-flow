@@ -1,8 +1,9 @@
-import pytest
 import socket
 import sys
-from apolo_sdk import Client
 from pathlib import Path
+
+import pytest
+from apolo_sdk import Client
 
 from apolo_flow.config_loader import LiveLocalCL
 from apolo_flow.parser import find_workspace

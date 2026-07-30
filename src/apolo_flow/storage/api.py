@@ -1,11 +1,8 @@
-from dataclasses import replace
-
 import abc
-import aiohttp
 import datetime
 import json
-from apolo_sdk import Client, Project as ApoloProject
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from typing import (
     AbstractSet,
     Any,
@@ -24,6 +21,9 @@ from typing import (
     Union,
     overload,
 )
+
+import aiohttp
+from apolo_sdk import Client, Project as ApoloProject
 from typing_extensions import TypedDict
 from yarl import URL
 
@@ -1030,7 +1030,8 @@ class ApiAttemptStorage(DeferredIdMixin[Attempt, AttemptInitArgs], AttemptStorag
         attempt = await self.get()
         if executor_id is not _Unset:
             attempt = replace(
-                attempt, executor_id=executor_id  # type: ignore[arg-type]
+                attempt,
+                executor_id=executor_id,  # type: ignore[arg-type]
             )
         if result is not _Unset:
             attempt = replace(attempt, result=result)  # type: ignore[arg-type]

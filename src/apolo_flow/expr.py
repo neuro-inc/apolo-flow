@@ -1,11 +1,10 @@
 # expression parser/evaluator
 # ${{ <expression> }}
-import dataclasses
-
 import abc
 import asyncio
 import collections
 import collections.abc
+import dataclasses
 import datetime
 import enum
 import hashlib
@@ -15,20 +14,9 @@ import operator
 import re
 import shlex
 from abc import ABC
-from apolo_sdk import Client, JobDescription, JobRestartPolicy, JobStatus
 from ast import literal_eval
 from collections.abc import Sized
 from contextlib import asynccontextmanager
-from funcparserlib.parser import (
-    Parser,
-    finished,
-    forward_decl,
-    many,
-    maybe,
-    oneplus,
-    skip,
-    some,
-)
 from typing import (
     Any,
     AsyncContextManager,
@@ -49,13 +37,24 @@ from typing import (
     Union,
     cast,
 )
+
+from apolo_sdk import Client, JobDescription, JobRestartPolicy, JobStatus
+from funcparserlib.parser import (
+    Parser,
+    finished,
+    forward_decl,
+    many,
+    maybe,
+    oneplus,
+    skip,
+    some,
+)
 from typing_extensions import Final, Protocol, runtime_checkable
 from yarl import URL
 
 from .tokenizer import Pos, Token, tokenize
 from .types import AlwaysT, LocalPath, RemotePath, TaskStatus
 from .utils import run_subproc
-
 
 LiteralT = Union[None, bool, int, float, str]
 
@@ -1163,8 +1162,7 @@ class Expr(BaseExpr[_T]):
                     and len(self._parsed) > 1
                 ):
                     raise EvalError(
-                        "Implicit concatenation is not allowed for "
-                        f"{self.type_name}",
+                        f"Implicit concatenation is not allowed for {self.type_name}",
                         start,
                         end,
                     )

@@ -1,8 +1,9 @@
 import operator
-import pytest
-from funcparserlib.parser import NoParseError
 from textwrap import dedent
 from typing import Any
+
+import pytest
+from funcparserlib.parser import NoParseError
 from typing_extensions import Final
 
 from apolo_flow.expr import (
@@ -23,7 +24,6 @@ from apolo_flow.expr import (
 )
 from apolo_flow.tokenizer import Pos, tokenize
 from apolo_flow.types import LocalPath
-
 
 FNAME = LocalPath("<test>")
 START: Final = Pos(0, 0, FNAME)
@@ -425,54 +425,45 @@ def test_operator_parse_brackets() -> None:
 
 
 def test_corner_case1() -> None:
-    s = dedent(
-        """\
+    s = dedent("""\
             jupyter notebook
               --no-browser
               --ip=0.0.0.0
               --allow-root
               --NotebookApp.token=
               --notebook-dir=${{ volumes.notebooks.mount }}
-        """
-    )
-    assert (
-        [
-            Text(
-                Pos(0, 0, FNAME),
-                Pos(5, 17, FNAME),
-                dedent(
-                    """\
+        """)
+    assert [
+        Text(
+            Pos(0, 0, FNAME),
+            Pos(5, 17, FNAME),
+            dedent("""\
                             jupyter notebook
                               --no-browser
                               --ip=0.0.0.0
                               --allow-root
                               --NotebookApp.token=
-                              --notebook-dir="""
-                ),
-            ),
-            Lookup(
-                Pos(5, 21, FNAME),
-                Pos(5, 44, FNAME),
-                "volumes",
-                [
-                    AttrGetter(Pos(5, 29, FNAME), Pos(5, 38, FNAME), "notebooks"),
-                    AttrGetter(Pos(5, 39, FNAME), Pos(5, 44, FNAME), "mount"),
-                ],
-            ),
-            Text(Pos(5, 47, FNAME), Pos(6, 0, FNAME), "\n"),
-        ]
-        == PARSER.parse(list(tokenize(s, START)))
-    )
+                              --notebook-dir="""),
+        ),
+        Lookup(
+            Pos(5, 21, FNAME),
+            Pos(5, 44, FNAME),
+            "volumes",
+            [
+                AttrGetter(Pos(5, 29, FNAME), Pos(5, 38, FNAME), "notebooks"),
+                AttrGetter(Pos(5, 39, FNAME), Pos(5, 44, FNAME), "mount"),
+            ],
+        ),
+        Text(Pos(5, 47, FNAME), Pos(6, 0, FNAME), "\n"),
+    ] == PARSER.parse(list(tokenize(s, START)))
 
 
 def test_corner_case2() -> None:
-    s = dedent(
-        """\
+    s = dedent("""\
             bash -c 'cd ${{ volumes.project.mount }} &&
               python -u ${{ volumes.code.mount }}/train.py
                 --data ${{ volumes.data.mount }}'
-        """
-    )
+        """)
     assert [
         Text(Pos(0, 0, FNAME), Pos(0, 12, FNAME), "bash -c 'cd "),
         Lookup(

@@ -4,6 +4,25 @@ import os
 import shlex
 import sys
 import textwrap
+from collections import defaultdict
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from typing import (
+    AbstractSet,
+    AsyncIterator,
+    Dict,
+    Generic,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+
 from apolo_sdk import (
     BadGateway,
     Client,
@@ -23,27 +42,9 @@ from apolo_sdk import (
     Volume,
     VolumeParseResult,
 )
-from collections import defaultdict
-from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, TaskID, TextColumn
-from typing import (
-    AbstractSet,
-    AsyncIterator,
-    Dict,
-    Generic,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
 from yarl import URL
 
 from . import ast
@@ -90,7 +91,6 @@ from .utils import (
     retries,
     retry,
 )
-
 
 log = logging.getLogger(__name__)
 
@@ -1010,9 +1010,9 @@ class BatchExecutor:
                 job_descr.status in {JobStatus.RUNNING, JobStatus.SUCCEEDED}
                 and task.status.is_pending
             ):
-                assert (
-                    job_descr.history.started_at
-                ), "RUNNING jobs should have started_at"
+                assert job_descr.history.started_at, (
+                    "RUNNING jobs should have started_at"
+                )
                 task = await self._update_task(
                     task.yaml_id,
                     new_status=TaskStatusItem(
@@ -1031,9 +1031,9 @@ class BatchExecutor:
                 log.debug(
                     f"BatchExecutor: finished processing logs for task {task.yaml_id}"
                 )
-                assert (
-                    job_descr.history.finished_at
-                ), "TERMINATED jobs should have finished_at"
+                assert job_descr.history.finished_at, (
+                    "TERMINATED jobs should have finished_at"
+                )
                 task = await self._update_task(
                     task.yaml_id,
                     new_status=TaskStatusItem(
@@ -1263,9 +1263,9 @@ class LocalsBatchExecutor(BatchExecutor):
         *,
         polling_timeout: Optional[float] = None,
     ) -> AsyncIterator["BatchExecutor"]:
-        assert (
-            polling_timeout is None
-        ), "polling_timeout is disabled for LocalsBatchExecutor"
+        assert polling_timeout is None, (
+            "polling_timeout is disabled for LocalsBatchExecutor"
+        )
         async with super(cls, LocalsBatchExecutor).create(
             console,
             bake_id,

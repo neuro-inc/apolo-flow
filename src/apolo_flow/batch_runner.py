@@ -1,17 +1,7 @@
 import dataclasses
-
-import apolo_extras
-import click
 import datetime
-from apolo_cli import __version__ as cli_version
-from apolo_sdk import Client, ResourceNotFound, __version__ as sdk_version
 from collections import defaultdict
-from graphviz import Digraph
 from operator import attrgetter
-from rich import box
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 from types import TracebackType
 from typing import (
     AbstractSet,
@@ -29,6 +19,16 @@ from typing import (
     Union,
     cast,
 )
+
+import apolo_extras
+import click
+from apolo_cli import __version__ as cli_version
+from apolo_sdk import Client, ResourceNotFound, __version__ as sdk_version
+from graphviz import Digraph
+from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 from yarl import URL
 
 import apolo_flow
@@ -67,7 +67,6 @@ from .utils import (
     fmt_timedelta,
     make_cmd_exec,
 )
-
 
 EXECUTOR_IMAGE = f"ghcr.io/neuro-inc/apolo-flow:{apolo_flow.__version__}"
 
@@ -807,8 +806,7 @@ class BatchRunner(AsyncContextManager["BatchRunner"]):
             last_attempt = await bake_storage.last_attempt().get()
         if not attempt.result.is_finished:
             raise click.BadArgumentUsage(
-                f"Cannot re-run still running attempt #{attempt.number} "
-                f"of {bake.id}."
+                f"Cannot re-run still running attempt #{attempt.number} of {bake.id}."
             )
         if not last_attempt.result.is_finished:
             raise click.BadArgumentUsage(

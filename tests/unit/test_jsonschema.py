@@ -1,17 +1,16 @@
-from dataclasses import dataclass
-
-import pytest
 import sys
-import yaml
+from dataclasses import dataclass
 from importlib.resources import open_text
 from itertools import chain
 from json import load
-from jsonschema import ValidationError, validate
 from pathlib import Path
 from typing import Union
 
-import apolo_flow
+import pytest
+import yaml
+from jsonschema import ValidationError, validate
 
+import apolo_flow
 
 JSON = Union[None, bool, int, float, str, list["JSON"], dict[str, "JSON"]]
 
