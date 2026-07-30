@@ -1,7 +1,6 @@
 # Dataclasses
-from dataclasses import dataclass, field
-
 import enum
+from dataclasses import dataclass, field
 from typing import AbstractSet, Mapping, Optional, Sequence, Type, Union
 
 from .expr import (

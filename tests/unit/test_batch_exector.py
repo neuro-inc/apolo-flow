@@ -1,9 +1,27 @@
-from dataclasses import replace
-
 import asyncio
-import pytest
 import shutil
 import sys
+from dataclasses import replace
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import (
+    Any,
+    AsyncIterator,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
+from unittest.mock import AsyncMock, MagicMock, Mock
+
+import pytest
 from apolo_sdk import (
     Client,
     Container,
@@ -21,25 +39,7 @@ from apolo_sdk import (
     Volume,
     get as api_get,
 )
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
-from pathlib import Path
 from rich import get_console
-from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Coroutine,
-    Dict,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-)
-from unittest.mock import AsyncMock, MagicMock, Mock
 from yarl import URL
 
 from apolo_flow.batch_executor import (
@@ -52,7 +52,6 @@ from apolo_flow.parser import ConfigDir
 from apolo_flow.storage.base import Storage, Task
 from apolo_flow.storage.in_memory import InMemoryStorage
 from apolo_flow.types import ImageStatus, LocalPath, TaskStatus
-
 
 MakeBatchRunner = Callable[[Path], Awaitable[BatchRunner]]
 

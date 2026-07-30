@@ -1,12 +1,14 @@
 requires = ["setuptools>=51", "wheel>=0.36"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-exclude = '''
-/(
-      \.git
-    | venv
-    | __pycache__
-    | \.tox
-)/
-'''
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = ["F541"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-third-party = ["aiohttp", "async_timeout", "pytest"]

@@ -1,10 +1,7 @@
-import aiohttp
 import asyncio
 import datetime
-import humanize
 import logging
 import time
-from apolo_sdk import BadGateway, ClientError, JobStatus, ServerNotAvailable
 from functools import wraps
 from typing import (
     Any,
@@ -21,6 +18,10 @@ from typing import (
     Union,
     cast,
 )
+
+import aiohttp
+import humanize
+from apolo_sdk import BadGateway, ClientError, JobStatus, ServerNotAvailable
 from typing_extensions import Concatenate, ParamSpec, Protocol
 
 from .types import COLORS, FullID, GitInfo, TaskStatus

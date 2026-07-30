@@ -1,4 +1,5 @@
 import pathlib
+
 import pytest
 from yaml.constructor import ConstructorError
 

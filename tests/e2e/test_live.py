@@ -2,6 +2,7 @@ import json
 import logging
 import pathlib
 import secrets
+
 from yarl import URL
 
 from tests.e2e.conftest import RunCLI

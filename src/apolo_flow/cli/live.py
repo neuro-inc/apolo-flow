@@ -1,7 +1,8 @@
-import apolo_sdk
-import click
 from contextlib import AsyncExitStack
 from typing import List, Optional, Sequence, Tuple
+
+import apolo_sdk
+import click
 
 from apolo_flow.cli.click_types import (
     LIVE_JOB,

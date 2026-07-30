@@ -1,12 +1,13 @@
 import os
 import pathlib
-import pytest
 import sys
 import textwrap
-from apolo_sdk import Client
 from contextlib import asynccontextmanager
-from graphviz import Digraph
 from typing import AsyncContextManager, AsyncIterator, Callable, Mapping
+
+import pytest
+from apolo_sdk import Client
+from graphviz import Digraph
 
 from apolo_flow.batch_runner import (
     BatchRunner,
@@ -25,7 +26,6 @@ from apolo_flow.expr import MultiError
 from apolo_flow.parser import ConfigDir
 from apolo_flow.storage.base import BakeImage, BakeMeta, Storage
 from apolo_flow.storage.in_memory import InMemoryStorage
-
 
 BatchClFactory = Callable[[str], AsyncContextManager[ConfigLoader]]
 

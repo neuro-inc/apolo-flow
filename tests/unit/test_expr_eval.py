@@ -1,7 +1,8 @@
-import pytest
-from apolo_sdk import Client
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, Dict, List
+
+import pytest
+from apolo_sdk import Client
 from typing_extensions import Final
 
 from apolo_flow.context import DepCtx
@@ -17,7 +18,6 @@ from apolo_flow.expr import (
 )
 from apolo_flow.tokenizer import Pos, tokenize
 from apolo_flow.types import LocalPath, TaskStatus
-
 
 FNAME = LocalPath("<test>")
 START: Final = Pos(0, 0, FNAME)

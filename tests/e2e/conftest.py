@@ -1,21 +1,20 @@
-from dataclasses import dataclass
-
-import aiohttp
 import asyncio
 import logging
 import os
 import pathlib
-import pytest
 import secrets
 import shutil
 import subprocess
 import sys
-from apolo_sdk import Config, get as api_get, login_with_token
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional
-from yarl import URL
 
+import aiohttp
+import pytest
+from apolo_sdk import Config, get as api_get, login_with_token
+from yarl import URL
 
 NETWORK_TIMEOUT = 3 * 60.0
 CLIENT_TIMEOUT = aiohttp.ClientTimeout(None, None, NETWORK_TIMEOUT, NETWORK_TIMEOUT)

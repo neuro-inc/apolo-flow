@@ -1,12 +1,13 @@
 # test functions available in expressions
 import pathlib
-import pytest
 import sys
+from contextlib import asynccontextmanager
+from typing import AbstractSet, Any, AsyncIterator, List, Mapping, Optional
+
+import pytest
 from _pytest.capture import CaptureFixture
 from apolo_sdk import Client
-from contextlib import asynccontextmanager
 from re_assert import Matches
-from typing import AbstractSet, Any, AsyncIterator, List, Mapping, Optional
 from typing_extensions import Protocol
 from yarl import URL
 
@@ -29,7 +30,6 @@ from apolo_flow.expr import (
 )
 from apolo_flow.tokenizer import Pos
 from apolo_flow.types import LocalPath, RemotePath
-
 
 POS = Pos(0, 0, LocalPath(__file__))
 

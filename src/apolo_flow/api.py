@@ -5,20 +5,16 @@ The small adapter protocols below are intentional seams: callers may inject quie
 runner adapters, while the supplied adapters never inspect or parse console output.
 """
 
-import dataclasses
-
-import apolo_sdk
 import asyncio
+import dataclasses
 import datetime
 import re
 import secrets
 import shutil
 import tempfile
-from apolo_sdk import JobStatus, ResourceNotFound
 from collections.abc import Awaitable
 from contextlib import AsyncExitStack, asynccontextmanager
 from pathlib import Path
-from rich.console import Console
 from time import monotonic
 from typing import (
     AbstractSet,
@@ -30,6 +26,10 @@ from typing import (
     TypeVar,
 )
 
+import apolo_sdk
+from apolo_sdk import JobStatus, ResourceNotFound
+from rich.console import Console
+
 from .batch_runner import BatchRunner
 from .cli.root import Root
 from .live_runner import JobInfo, LiveRunner
@@ -37,7 +37,6 @@ from .parser import find_workspace
 from .storage.api import ApiStorage
 from .storage.base import Attempt, Bake, ProjectStorage, Task
 from .types import TaskStatus
-
 
 _BAKE_ID_RE = re.compile(
     r"bake-[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}"

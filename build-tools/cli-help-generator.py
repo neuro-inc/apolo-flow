@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-from dataclasses import dataclass, field
-
-import click
 import os
 import re
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, List
+
+import click
 
 from apolo_flow.cli.main import cli
 

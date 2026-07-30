@@ -1,8 +1,6 @@
-from dataclasses import replace
-
 import datetime
 import secrets
-from apolo_sdk import ResourceNotFound
+from dataclasses import replace
 from typing import (
     AbstractSet,
     AsyncIterator,
@@ -15,6 +13,8 @@ from typing import (
     Type,
     Union,
 )
+
+from apolo_sdk import ResourceNotFound
 from yarl import URL
 
 from apolo_flow.storage.base import (
@@ -467,7 +467,8 @@ class InMemoryAttemptStorage(AttemptStorage):
         attempt = await self.get()
         if executor_id is not _Unset:
             attempt = replace(
-                attempt, executor_id=executor_id  # type: ignore[arg-type]
+                attempt,
+                executor_id=executor_id,  # type: ignore[arg-type]
             )
         if result is not _Unset:
             attempt = replace(attempt, result=result)  # type: ignore[arg-type]
@@ -578,7 +579,8 @@ class InMemoryBakeImageStorage(BakeImageStorage):
             image = replace(image, status=status)  # type: ignore[arg-type]
         if builder_job_id is not _Unset:
             image = replace(
-                image, builder_job_id=builder_job_id  # type: ignore[arg-type]
+                image,
+                builder_job_id=builder_job_id,  # type: ignore[arg-type]
             )
         self._db.bake_images[image.id] = image
         return image

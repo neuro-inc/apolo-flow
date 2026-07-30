@@ -1,9 +1,9 @@
-import dataclasses
-
 import abc
 import collections
+import dataclasses
 from abc import abstractmethod
 from typing import AbstractSet, Any, Callable, Iterable, List, Optional, Tuple, Type
+
 from typing_extensions import get_type_hints as _get_hints
 
 from apolo_flow.context import Context, ModuleContext, TagsCtx
@@ -109,8 +109,7 @@ class AttrGetterVisitor(GetterVisitor):
         if new_ctx is None:
             self._record_error(
                 EvalError(
-                    f"'{_format_obj_name(obj)}' has no attribute "
-                    f"'{self._getter.name}'",
+                    f"'{_format_obj_name(obj)}' has no attribute '{self._getter.name}'",
                     self._getter.start,
                     self._getter.end,
                 )
@@ -121,8 +120,7 @@ class AttrGetterVisitor(GetterVisitor):
         if metadata == "NeedsCtx" and self._getter.name not in self._known_needs:
             self._record_error(
                 EvalError(
-                    f"Task '{self._getter.name}' is not available under "
-                    f"needs context",
+                    f"Task '{self._getter.name}' is not available under needs context",
                     self._getter.start,
                     self._getter.end,
                 )
@@ -140,7 +138,7 @@ class AttrGetterVisitor(GetterVisitor):
     def set(self, type_args: Tuple[Any, ...], metadata: str) -> Optional[Any]:
         self._record_error(
             EvalError(
-                f"'{metadata}' has no attribute " f"'{self._getter.name}'",
+                f"'{metadata}' has no attribute '{self._getter.name}'",
                 self._getter.start,
                 self._getter.end,
             )

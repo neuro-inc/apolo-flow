@@ -1,5 +1,6 @@
-import pytest
 from typing import Mapping, Sequence, Set, Tuple
+
+import pytest
 
 from apolo_flow.colored_topo_sorter import ColoredTopoSorter, CycleError
 

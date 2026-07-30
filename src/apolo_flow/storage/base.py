@@ -1,8 +1,6 @@
-from dataclasses import dataclass
-
 import abc
 import datetime
-from apolo_sdk import JobStatusItem, ResourceNotFound
+from dataclasses import dataclass
 from types import TracebackType
 from typing import (
     AbstractSet,
@@ -15,6 +13,8 @@ from typing import (
     Union,
     overload,
 )
+
+from apolo_sdk import JobStatusItem, ResourceNotFound
 from yarl import URL
 
 from apolo_flow.types import FullID, GitInfo, ImageStatus, TaskStatus

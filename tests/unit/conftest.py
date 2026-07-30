@@ -1,9 +1,10 @@
 import asyncio
 import os
 import pathlib
+from typing import Any, AsyncIterator, Iterator
+
 import pytest
 from apolo_sdk import Client, get as api_get, login_with_token
-from typing import Any, AsyncIterator, Iterator
 from yarl import URL
 
 

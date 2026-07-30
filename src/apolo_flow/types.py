@@ -1,9 +1,7 @@
-from dataclasses import dataclass
-
 import enum
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import ClassVar, List, Sequence, Tuple
-
 
 LocalPath = Path
 RemotePath = PurePosixPath
