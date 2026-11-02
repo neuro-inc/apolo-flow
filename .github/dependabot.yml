@@ -4,10 +4,16 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   - package-ecosystem: "docker"
     directory: "/examples/demo-jobs"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   - package-ecosystem: "pip"
     directory: "/"
     schedule:

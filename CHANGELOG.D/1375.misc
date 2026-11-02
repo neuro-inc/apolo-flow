@@ -1,0 +1,1 @@
+Require Python 3.11.18 or newer, update Python patch versions, restrict Dependabot Python image updates to patch releases, and manage dependencies with Poetry and a committed lockfile in local development and CI.
