@@ -20,6 +20,10 @@ updates:
       interval: "daily"
     allow:
       - dependency-type: "all"
+    groups:
+      python-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

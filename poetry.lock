@@ -311,18 +311,18 @@ typing-extensions = {version = ">=4.2", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "apolo-cli"
-version = "26.8.0"
+version = "26.11.0"
 description = "Apolo Platform client"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["main"]
 files = [
-    {file = "apolo_cli-26.8.0-py3-none-any.whl", hash = "sha256:dcec6e667434d532979ad82835f82b4d5a5593b8b3ef4b62177b39c0afec6348"},
-    {file = "apolo_cli-26.8.0.tar.gz", hash = "sha256:8aba4ff9c8a9df0f5cb72d2af527cabcef373299251d7d1eb45613c428ebf9c3"},
+    {file = "apolo_cli-26.11.0-py3-none-any.whl", hash = "sha256:0f706eb406e79fb960c6cf963002fd78d9584ea217e3268d665de59f942105b8"},
+    {file = "apolo_cli-26.11.0.tar.gz", hash = "sha256:66ecae9ad03a8d9dbbbaedc5cb48ad596469f891b70104447ac7740e38cc414e"},
 ]
 
 [package.dependencies]
-apolo-sdk = ">=26.8.0"
+apolo-sdk = ">=26.11.0"
 certifi = "*"
 click = ">=8.3"
 humanize = ">=3.3"
@@ -354,14 +354,14 @@ toml = ">=0.10.0"
 
 [[package]]
 name = "apolo-sdk"
-version = "26.10.0"
+version = "26.11.0"
 description = "Apolo SDK"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["main"]
 files = [
-    {file = "apolo_sdk-26.10.0-py3-none-any.whl", hash = "sha256:040bdc9b1465e9f12cbebea5c56281a5c7d0f240f66f6f7a35b18b4d23aa6fc5"},
-    {file = "apolo_sdk-26.10.0.tar.gz", hash = "sha256:622de9d4dd0e005b8aa440123f8058f5d7ff1f44a0298e9046a765a592bd824d"},
+    {file = "apolo_sdk-26.11.0-py3-none-any.whl", hash = "sha256:ebe0267d710a93b39617243897a30cc1fd7596de55372b970cbb80c67df93689"},
+    {file = "apolo_sdk-26.11.0.tar.gz", hash = "sha256:6574cf6ed9c0fe92d32a9f12e92653fc66cb3e96f1610b0ea0a2c7650bfe9619"},
 ]
 
 [package.dependencies]
@@ -4310,4 +4310,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.18"
-content-hash = "4d4bd78fc021708806c383bc35bb2dadffda7475f49024c3bdfbc53ad0d37990"
+content-hash = "4033deb8281330d9a0661ee8ac18468d2874e8cc88833fcedf3da54be4e26e9c"
