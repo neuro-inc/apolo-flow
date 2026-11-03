@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Setup Python
-        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.10.0
+        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.11.0
         with:
           python-version: "3.13"
       - name: Cache pre-commit hooks
@@ -70,7 +70,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Setup Python ${{ matrix.python-version }}
-        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.10.0
+        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.11.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -118,7 +118,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Setup Python ${{ matrix.python-version }}
-        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.10.0
+        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.11.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -170,7 +170,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Setup Python 3.13
-        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.10.0
+        uses: neuro-inc/reuse/.github/actions/setup-python-poetry@v26.11.0
         with:
           python-version: "3.13"
       - name: Install dependencies
