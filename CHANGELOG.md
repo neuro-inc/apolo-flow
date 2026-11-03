@@ -5,6 +5,16 @@
 
 [comment]: # (towncrier release notes start)
 
+# Apolo Flow 26.11.0 (2026-11-03)
+
+## Features
+
+- Add retries while loading actions outputs. ([#1365](https://github.com/neuro-inc/neuro-flow/issues/1365))
+
+
+- Add 3.15, drop 3.10 and 3.11 Python support [#1375](https://github.com/neuro-inc/neuro-flow/issues/1375)
+
+
 # Apolo Flow 26.7.2 (2026-07-30)
 
 ## Bugfixes
