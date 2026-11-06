@@ -63,6 +63,9 @@ version = {attr = "apolo_flow.__version__"}
 package-mode = false
 requires-poetry = "==2.5.1"
 
+[tool.poetry.dependencies]
+python = ">=3.12,<4"
+
 [tool.poetry.group.dev.dependencies]
 cookiecutter = "==2.7.1"
 jsonschema = "==4.26.0"
