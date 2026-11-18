@@ -1207,7 +1207,7 @@ description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 groups = ["dev"]
-markers = "sys_platform == \"win32\" or os_name == \"nt\""
+markers = "os_name == \"nt\" or sys_platform == \"win32\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -3840,14 +3840,14 @@ referencing = "*"
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.9.0.20260716"
+version = "2.9.0.20261029"
 description = "Typing stubs for python-dateutil"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "types_python_dateutil-2.9.0.20260716-py3-none-any.whl", hash = "sha256:1ae41d51a5c5f6bbeeb7f1f34df7086d55ff1605cf88d2ed71a7a276e1a7794e"},
-    {file = "types_python_dateutil-2.9.0.20260716.tar.gz", hash = "sha256:1d55d1c3024bdb4861bb6a6622c9ec800c433d87bdc5b16fb84cdd0eed4ef2cb"},
+    {file = "types_python_dateutil-2.9.0.20261029-py3-none-any.whl", hash = "sha256:8fd04c6e1722d2523a74d6670596fc0007077651465b686f144ae1d200dcacf5"},
+    {file = "types_python_dateutil-2.9.0.20261029.tar.gz", hash = "sha256:3258b491686c441d8074cfc8712308741900c9ff128a06421baec3767c503511"},
 ]
 
 [[package]]
@@ -4232,4 +4232,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4"
-content-hash = "505eb34a0ca88f4954fd8c6b29dffa46a52ef72a845e02246c9eba6efa22ac49"
+content-hash = "e6a4f8e87d48f2f4c97e988cab1bacc14682c5149aaa10848315007314818019"
