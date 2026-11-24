@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "apolo-cli>=26.11.2",
-    "pyyaml>=5.4",
+    "pyyaml>=6.0.4",
     "funcparserlib>=1.0.0",
     "humanize>=4.17.0",
     "apolo-extras>=26.11.1",
